@@ -1,5 +1,5 @@
 # aiad_FEUP
-##Run 
+## Run 
 javac -classpath <jade.jar-classpath> *.java
 
 java -classpath <jade.jar-classpath>:. jade.Boot -gui -agents auctioneer:AuctioneerAg
