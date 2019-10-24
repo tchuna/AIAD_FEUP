@@ -7,14 +7,20 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAException;
+import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import jade.proto.AchieveREInitiator;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Vector;
 
 public class AuctioneerAg extends Agent{
     // The GUI by means of which the user can start an auction
     private CreateAuctionGui myGui;
     // The list of known BIDDER agents
-    private AID[] bidderAgents;
+    private List<AID> bidderAgents;
     // Name of item being auctioned
     private String itemName;
     // Starting price of the item
@@ -33,7 +39,7 @@ public class AuctioneerAg extends Agent{
         // Close the GUI
         myGui.dispose();
         // Printout a dismissal message
-        System.out.println("Auctioneer-agent "+getAID().getName()+" terminating.");
+        printInTerminal("Auctioneer-agent "+getAID().getName()+" terminating.");
     }
 
     /**
@@ -46,8 +52,8 @@ public class AuctioneerAg extends Agent{
                 // Sets the variables values defined in the GUI
                 itemName=name;
                 startingPrice=price;
-                System.out.println("Started the auction of the item --> "+itemName+" <-- ");
-                System.out.println("\nStarting price is --> "+startingPrice+" $");
+                printInTerminal("Started the auction of the item --> "+itemName+" <-- ");
+                printInTerminal("\nStarting price is --> "+startingPrice+" $");
             }
         } );
         addBehaviour(new OneShotBehaviour() {
@@ -60,22 +66,23 @@ public class AuctioneerAg extends Agent{
                 template.addServices(sd);
                 try {
                     DFAgentDescription[] result = DFService.search(myAgent, template);
-                    System.out.println("Found the following bidder agents:");
+                    printInTerminal("Found the following bidder agents:");
                     // Identifies all bidder agents
-                    bidderAgents = new AID[result.length];
+                    bidderAgents = new ArrayList<>();
                     for (int i = 0; i < result.length; ++i) {
-                        bidderAgents[i] = result[i].getName();
-                        System.out.println(bidderAgents[i].getName());
+                        bidderAgents.add(result[i].getName()) ;
+                        System.out.println(bidderAgents.get(i).getName());
                     }
-                    // Send the cfp to all sellers
-                    ACLMessage cfp = new ACLMessage(ACLMessage.CFP);
-                    for (int i = 0; i < bidderAgents.length; ++i)
-                        cfp.addReceiver(bidderAgents[i]);
-                    cfp.setContent(itemName+"-"+startingPrice);
-                    cfp.setConversationId("Auction");
-                    cfp.setReplyWith("cfp"+System.currentTimeMillis()); // Unique value
-                    myAgent.send(cfp);
+                    // Send the REQUEST to all sellers
+                    ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
+                    for (int i = 0; i < bidderAgents.size(); ++i)
+                        request.addReceiver(bidderAgents.get(i));
+                    request.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
+                    request.setContent(itemName+"-"+startingPrice);
+//                    request.setConversationId("Auction");
+                    request.setReplyWith("req"+System.currentTimeMillis()); // Unique value
 
+                    addBehaviour(new AchieveREInitiatorAuctioneer(myAgent, request));
 //                    // Prepare the template to get proposals
 //                    mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
 //                            MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
@@ -85,6 +92,53 @@ public class AuctioneerAg extends Agent{
                 }
             }
         });
+
     }
 
+    private class AchieveREInitiatorAuctioneer extends AchieveREInitiator {
+        public AchieveREInitiatorAuctioneer(Agent a, ACLMessage msg) {
+            super(a, msg);
+        }
+
+        @Override
+        protected void handleAgree(ACLMessage agree) {
+            super.handleAgree(agree);
+            printInTerminal("Auctioneer "+myAgent.getName()+" received AGREE from "+agree.getSender().getName());
+        }
+
+        @Override
+        protected void handleRefuse(ACLMessage refuse) {
+            super.handleRefuse(refuse);
+            printInTerminal("Auctioneer "+myAgent.getName()+" received REFUSE from "+refuse.getSender().getName());
+            // if the answer is REFUSE, the agent is removed from bidderAgents List
+            bidderAgents.remove(refuse.getSender());
+            System.out.println("\nBIDDERS ARE:\n");
+            for (int i = 0; i < bidderAgents.size(); ++i)
+                System.out.println("1 - "+(bidderAgents.get(i).getName()));
+        }
+
+        @Override
+        protected void handleInform(ACLMessage inform) {
+            super.handleInform(inform);
+            printInTerminal("Auctioneer "+myAgent.getName()+" received INFORM from "+inform.getSender().getName());
+        }
+
+        @Override
+        protected void handleAllResponses(Vector responses) {
+            super.handleAllResponses(responses);
+        }
+
+        @Override
+        protected void handleAllResultNotifications(Vector resultNotifications) {
+            super.handleAllResultNotifications(resultNotifications);
+        }
+    }
+
+
+    private void printInTerminal(String msg ){
+        System.out.println("---------------");
+        System.out.println("AUCTIONEER "+getName());
+        System.out.println("---------------");
+        System.out.println(msg+"\n\n");
+    }
 }
