@@ -10,10 +10,13 @@ import jade.domain.FIPANames;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
+import jade.proto.ContractNetResponder;
 
 import java.util.Arrays;
 
 public class BidderAgent extends Agent{
+
+    private int curretnItemPrice;
 
     // Put agent initializations here
     protected void setup() {
@@ -84,6 +87,8 @@ public class BidderAgent extends Agent{
             printInTerminal("Agent "+getLocalName()+": REQUEST received from "+request.getSender().getName()+". Action is "+request.getContent());
             System.out.println("CONTENT OF REQUEST IS: "+request.getContent());
             System.out.println("Performative IS: "+request.getPerformative());
+            updatePriceFromMsg(request.getContent());
+
 
 //            if (checkAction()) {
                 // We agree to perform the action. Note that in the FIPA-Request
@@ -111,6 +116,10 @@ public class BidderAgent extends Agent{
 //                printInTerminal("Agent "+getLocalName()+": Action successfully performed");
                 ACLMessage inform = request.createReply();
                 inform.setPerformative(ACLMessage.INFORM);
+                MessageTemplate template = MessageTemplate.and(
+  		            MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+                      MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+                myAgent.addBehaviour(new AuctionRoundBidder(myAgent, template));
                 return inform;
 //            }
 //            else {
@@ -118,6 +127,62 @@ public class BidderAgent extends Agent{
 //                throw new FailureException("unexpected-error");
 //            }
         }
+    }
+
+    private class AuctionRoundBidder extends ContractNetResponder{
+        public AuctionRoundBidder(Agent a, MessageTemplate mt) {
+            super(a, mt);
+        }
+
+        @Override
+        protected ACLMessage prepareResponse(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+            System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
+            boolean proposal = evaluateAction();
+            if (proposal) {
+                // We provide a proposal
+                System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
+                ACLMessage propose = cfp.createReply();
+                propose.setPerformative(ACLMessage.PROPOSE);
+                propose.setContent(String.valueOf(proposal));
+                return propose;
+            }
+            else {
+                // We refuse to provide a proposal
+                System.out.println("Agent "+getLocalName()+": Refuse");
+                throw new RefuseException("evaluation-failed");
+            }
+        }
+
+        @Override
+        protected ACLMessage prepareResultNotification(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+            System.out.println("Agent "+getLocalName()+": Proposal accepted");
+            if (true) {
+                System.out.println("Agent "+getLocalName()+": Action successfully performed");
+                ACLMessage inform = accept.createReply();
+                inform.setPerformative(ACLMessage.INFORM);
+                return inform;
+            }
+            else {
+                System.out.println("Agent "+getLocalName()+": Action execution failed");
+                throw new FailureException("unexpected-error");
+            }	
+        }
+
+        @Override
+        protected void handleRejectProposal(ACLMessage reject) {
+            System.out.println("Agent "+getLocalName()+": Proposal rejected");
+        }
+
+ 
+        private boolean evaluateAction() {
+            // NESTE CASO ESTOU SEMPRE A BID AO CALHAS, MAS AQUI SUPONHO QUEVAI ENTRAR COMPORTAMENTO/ESTRATEGIA/DINHEIRO QUE TEM
+            int random = (int) (Math.random() * 10);
+            return (random > 5 ? true : false);
+        }
+    }
+
+    private void updatePriceFromMsg(String msg){
+        this.curretnItemPrice = Integer.parseInt(msg.substring(msg.lastIndexOf("-") + 1));
     }
 
 
