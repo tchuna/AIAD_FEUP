@@ -168,7 +168,7 @@ public class BidderAgent extends Agent{
             }
         }
 
-        @Override
+        //@Override
         protected void handleRejectProposal(ACLMessage reject) {
             System.out.println("Agent "+getLocalName()+": Proposal rejected");
         }
