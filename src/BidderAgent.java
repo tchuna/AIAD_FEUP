@@ -165,15 +165,15 @@ public class BidderAgent extends Agent{
             else {
                 System.out.println("Agent "+getLocalName()+": Action execution failed");
                 throw new FailureException("unexpected-error");
-            }	
+            }
         }
 
-        @Override
+        //@Override
         protected void handleRejectProposal(ACLMessage reject) {
             System.out.println("Agent "+getLocalName()+": Proposal rejected");
         }
 
- 
+
         private boolean evaluateAction() {
             // NESTE CASO ESTOU SEMPRE A BID AO CALHAS, MAS AQUI SUPONHO QUEVAI ENTRAR COMPORTAMENTO/ESTRATEGIA/DINHEIRO QUE TEM
             int random = (int) (Math.random() * 10);
