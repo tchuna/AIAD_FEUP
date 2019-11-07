@@ -58,7 +58,7 @@ class  CreateHumanBidderGUI extends JFrame {
             } );
 		p.add(restButton);
 
-    p.add(new JLabel("My myItens:"));
+    p.add(new JLabel("My Itens:"));
 		JComboBox box = new JComboBox(humanBidderAgent.getmyItens());
 		p.add(box);
 

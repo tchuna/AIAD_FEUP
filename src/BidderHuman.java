@@ -16,18 +16,39 @@ public class BidderHuman extends Agent{
   private int  currentBudget;
   private String [] myItens;
 
-  protected void setup(){
+  private AID AuctioneerAID;
+  private ACLMessage msgCFP;
+
+
+  protected void setup() {
+
     currentBudget=100;
     String[] aux = { "BMW2020", "Rolex", "Book", "Rabbit"};
     myItens =aux;
 
+    System.out.println("Hello! Bidder "+getAID().getName()+" i  have " + currentBudget +" $  in my Budget");
+
     bidderGui = new CreateHumanBidderGUI(this);
 		bidderGui.showGui();
 
-    System.out.println("Hello! Bidder "+getAID().getName()+" i  have " + currentBudget +" $  in my Budget");
+
+		DFAgentDescription dfd = new DFAgentDescription();
+		dfd.setName(getAID());
 
 
-  }
+		ServiceDescription sd = new ServiceDescription();
+    sd.setType("bidding-agent");
+    sd.setName("Blind-Best-Auctions");
+		dfd.addServices(sd);
+
+
+		try {
+			DFService.register(this, dfd);
+		}
+		catch (FIPAException fe) {
+			fe.printStackTrace();
+		}
+}
 
 
   protected int getcurrentBudget(){
