@@ -13,6 +13,7 @@ import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREInitiator;
 import jade.proto.ContractNetInitiator;
 
+import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -216,6 +217,7 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handleAllResponses(Vector responses, Vector acceptances) {
+            System.out.println("DEBUG1");
             // Handles the winner of the auction
             if(responses.size()==1){
                 ACLMessage response = (ACLMessage) responses.get(0);
@@ -244,27 +246,32 @@ public class AuctioneerAg extends Agent{
                     }
                 }
             }
+            System.out.println("DEBUG2");
 
             // Highest bidder's message is ACCEPT_PROPOSAL
             if (accept != null) {
                 System.out.println("Accepting proposal "+bestBidProposal+"$ from responder "+bestBidderProposer.getName());
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
             }
-
+            System.out.println("DEBUG3");
             // Content of the message is the same for everyone: <HIGHEST_BIDDER_NAME>-<VALUE>
             for(int i = 0; i< acceptances.size(); i++) {
                 ((ACLMessage) responses.get(i)).setContent(bestBidderProposer.getLocalName()+"-"+bestBidProposal);
             }
-
+            System.out.println("DEBUG4");
             //CREATES NEW ITERATION
             roundCounter++;
             ACLMessage newIterationCFP = new ACLMessage(ACLMessage.CFP);
             newIterationCFP.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
             newIterationCFP.setContent("Round-"+roundCounter);
-
+            System.out.println("DEBUG5");
             Vector v =new Vector();
             v.add(newIterationCFP);
-            newIteration(v);
+            //newIteration(v);
+           // myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
+
+            myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
+            System.out.println("DEBUG6");
         }
 
         @Override

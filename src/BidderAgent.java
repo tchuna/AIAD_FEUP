@@ -13,6 +13,7 @@ import jade.proto.AchieveREResponder;
 import jade.proto.ContractNetResponder;
 
 import java.util.Arrays;
+import java.util.Random;
 
 public class BidderAgent extends Agent{
 
@@ -135,7 +136,7 @@ public class BidderAgent extends Agent{
         }
 
         @Override
-        protected ACLMessage prepareResponse(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
+        protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
             boolean proposal = evaluateAction();
             if (proposal) {
@@ -143,18 +144,23 @@ public class BidderAgent extends Agent{
                 System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
-                propose.setContent(String.valueOf(proposal));
+                Random r = new Random();
+                propose.setContent(String.valueOf(r.nextInt(30-20)+20));
                 return propose;
             }
             else {
                 // We refuse to provide a proposal
                 System.out.println("Agent "+getLocalName()+": Refuse");
-                throw new RefuseException("evaluation-failed");
+                //throw new RefuseException("evaluation-failed");
+                ACLMessage refuse = cfp.createReply();
+                refuse.setPerformative(ACLMessage.REFUSE);
+               // refuse.setContent(String.valueOf(proposal));
+                return refuse;
             }
         }
 
         @Override
-        protected ACLMessage prepareResultNotification(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
+        protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
             System.out.println("Agent "+getLocalName()+": Proposal accepted");
             if (true) {
                 System.out.println("Agent "+getLocalName()+": Action successfully performed");
@@ -168,16 +174,19 @@ public class BidderAgent extends Agent{
             }
         }
 
-        //@Override
-        protected void handleRejectProposal(ACLMessage reject) {
+        @Override
+        protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
             System.out.println("Agent "+getLocalName()+": Proposal rejected");
+            super.handleRejectProposal(cfp, propose, reject);
         }
+
+
 
 
         private boolean evaluateAction() {
             // NESTE CASO ESTOU SEMPRE A BID AO CALHAS, MAS AQUI SUPONHO QUEVAI ENTRAR COMPORTAMENTO/ESTRATEGIA/DINHEIRO QUE TEM
             int random = (int) (Math.random() * 10);
-            return (random > 5 ? true : false);
+            return (random > 2 ? true : false);
         }
     }
 
