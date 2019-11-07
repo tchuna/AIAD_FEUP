@@ -14,13 +14,18 @@ public class BidderHuman extends Agent{
   private CreateHumanBidderGUI bidderGui;
 
   private int  currentBudget;
+  private String [] myItens;
 
   protected void setup(){
     currentBudget=100;
+    String[] aux = { "BMW2020", "Rolex", "Book", "Rabbit"};
+    myItens =aux;
 
     bidderGui = new CreateHumanBidderGUI(this);
 		bidderGui.showGui();
- 
+
+    System.out.println("Hello! Bidder "+getAID().getName()+" i  have " + currentBudget +" $  in my Budget");
+
 
   }
 
@@ -28,6 +33,12 @@ public class BidderHuman extends Agent{
   protected int getcurrentBudget(){
 
     return this.currentBudget;
+  }
+
+
+  protected String[] getmyItens(){
+
+    return this.myItens;
   }
 
 }

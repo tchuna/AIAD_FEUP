@@ -17,13 +17,13 @@ class  CreateHumanBidderGUI extends JFrame {
 		super(a.getLocalName() + ": Place bid or Rest");
 
 		humanBidderAgent = a;
-    
+
 		JPanel p = new JPanel();
-		p.setLayout(new GridLayout(3, 4));
+		p.setLayout(new GridLayout(4, 4));
 		p.add(new JLabel("Current Budget:"));
 		p.add(new JLabel(String.valueOf( humanBidderAgent.getcurrentBudget()+"$")));
 
-		p.add(new JLabel("Bid Price:"));
+		p.add(new JLabel("Bid :"));
 		priceField = new JTextField(10);
 		p.add(priceField);
 
@@ -57,6 +57,10 @@ class  CreateHumanBidderGUI extends JFrame {
                 }
             } );
 		p.add(restButton);
+
+    p.add(new JLabel("My myItens:"));
+		JComboBox box = new JComboBox(humanBidderAgent.getmyItens());
+		p.add(box);
 
 		getContentPane().add(p, BorderLayout.CENTER);
 
