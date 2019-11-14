@@ -1,8 +1,6 @@
 //package com.aiad;
 
 import jade.core.Agent;
-import jade.core.AID;
-import jade.core.behaviours.*;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.*;
 import jade.domain.FIPAException;
@@ -16,16 +14,23 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class BidderAgent extends Agent{
+    // Ammount of money available to spend in this auction
+    private int budget;
+    // How aggressive the bidder is
+    private int agressivenessLevel;
 
-    private int curretnItemPrice;
+    private int currentItemPrice;
 
     // Put agent initializations here
     protected void setup() {
         // Get the bidder's characteristics
         Object[] args = getArguments();
+        budget=100;
+
         if (args != null && args.length > 0) {
             //
-            printInTerminal("Args: "+ Arrays.toString(args)); 
+            printInTerminal("Args: "+ Arrays.toString(args));
+//            budget=100;
         }
 
         // Register the BIDDER service in the yellow pages
@@ -89,16 +94,22 @@ public class BidderAgent extends Agent{
             printInTerminal("CONTENT OF REQUEST IS: "+request.getContent());
             updatePriceFromMsg(request.getContent());
 
-
-//            if (checkAction()) {
+            if (isParticipatingInAuction()) {
                 // We agree to perform the action. Note that in the FIPA-Request
                 // protocol the AGREE message is optional. Return null if you
                 // don't want to send it.
                 printInTerminal(": Agree");
                 ACLMessage agree = request.createReply();
-                agree.setPerformative(myAgent.getLocalName().equals("a")?ACLMessage.REFUSE:ACLMessage.AGREE);
+                agree.setPerformative(ACLMessage.AGREE);
                 return agree;
-//            }
+            }
+
+            else {
+                ACLMessage refuse = request.createReply();
+                refuse.setPerformative(ACLMessage.REFUSE);
+                return refuse;
+            }
+
 //            else {
 //                // We refuse to perform the action
 //                printInTerminal(": Refuse");
@@ -127,6 +138,11 @@ public class BidderAgent extends Agent{
 //                throw new FailureException("unexpected-error");
 //            }
         }
+        private boolean isParticipatingInAuction(){
+            if(currentItemPrice>=budget)
+                return false;
+            return true;
+        }
     }
 
     private class AuctionRoundBidder extends ContractNetResponder{
@@ -137,14 +153,13 @@ public class BidderAgent extends Agent{
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             printInTerminal(": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
-            boolean proposal = evaluateAction();
-            if (proposal) {
+            int proposal = prepareBid();
+            if (proposal!=0) {
                 // We provide a proposal
                 printInTerminal(": Proposing "+proposal);
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
-                Random r = new Random();
-                propose.setContent(String.valueOf(r.nextInt(30-20)+20));
+                propose.setContent(String.valueOf(proposal));
                 return propose;
             }
             else {
@@ -161,6 +176,10 @@ public class BidderAgent extends Agent{
         @Override
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
             printInTerminal(": Proposal accepted");
+
+            if(accept!=null)
+                updatePriceFromMsg(accept.getContent());
+
             if (true) {
                 printInTerminal(": Action successfully performed");
                 ACLMessage inform = accept.createReply();
@@ -175,35 +194,41 @@ public class BidderAgent extends Agent{
 
         @Override
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-            super.handleRejectProposal(cfp, propose, reject);
+            printInTerminal(": Proposal rejected");
             if(reject.getContent()!=null){
+//
+//                printInTerminal(": cfp  ---> "+ cfp.getContent());
+//                printInTerminal(": propose  ---> "+ propose.getContent());
+//                printInTerminal(": reject  ---> "+ reject.getContent());
 
-                printInTerminal(": Proposal rejected");
-
-                printInTerminal(": cfp  ---> "+ cfp.getContent());
-                printInTerminal(": propose  ---> "+ propose.getContent());
-                printInTerminal(": reject  ---> "+ reject.getContent());
-
-                String [] splits = reject.getContent().split("-");
+                updatePriceFromMsg(reject.getContent());
                 printInTerminal(":");
-                printInTerminal(": Current value is  ---> "+ splits[1]);
+                printInTerminal(": Current value is  ---> "+ currentItemPrice);
             }
-
+            super.handleRejectProposal(cfp, propose, reject);
         }
 
-        private boolean evaluateAction() {
-            // NESTE CASO ESTOU SEMPRE A BID AO CALHAS, MAS AQUI SUPONHO QUEVAI ENTRAR COMPORTAMENTO/ESTRATEGIA/DINHEIRO QUE TEM
-            int random = (int) (Math.random() * 10);
-            return (random > 2 ? true : false);
+        private int prepareBid() {
+            if(currentItemPrice>=budget)
+                return 0;
+
+            //TODO: Evaluate agressiveness here
+
+            Random r = new Random();
+            int bid = r.nextInt(budget-currentItemPrice)+currentItemPrice+1; //randomizing between currprice and budget -- this is stupid
+            return bid;
         }
     }
 
     private void updatePriceFromMsg(String msg){
-        this.curretnItemPrice = Integer.parseInt(msg.substring(msg.lastIndexOf("-") + 1));
+        String [] splits = msg.split("-");
+        this.currentItemPrice=Integer.parseInt(splits[1]);
     }
 
 
     private void printInTerminal(String msg ){
         System.out.println("BIDDER "+getLocalName()+" -> " +msg);
     }
+
+
 }

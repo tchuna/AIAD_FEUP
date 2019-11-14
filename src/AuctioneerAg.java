@@ -30,6 +30,11 @@ public class AuctioneerAg extends Agent{
 
     private int roundCounter=0;
 
+
+    private AID lastAcceptedProposal_Bidder ;
+    private int lastAcceptedProposal_Value ;
+
+
     // Put agent initializations here
     protected void setup() {
         // Create and show the GUI
@@ -141,6 +146,7 @@ public class AuctioneerAg extends Agent{
                 msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
                 msg.setContent("Round-"+roundCounter);
                 // Launch first ROUND
+                System.out.println("-----------***********NEW ROUND "+ roundCounter+"***********----------------");
                 myAgent.addBehaviour(new AuctionRound(myAgent, msg));
             }
             else{
@@ -182,9 +188,9 @@ public class AuctioneerAg extends Agent{
             printInTerminal("Auctioneer "+myAgent.getName()+" received REFUSE from "+refuse.getSender().getName()+" in Round no "+roundCounter);
             // if the answer is REFUSE, the agent is removed from bidderAgents List
             bidderAgents.remove(refuse.getSender());
-            printInTerminal("\nBIDDERS ARE:\n");
+            printInTerminal("\nBIDDERS ARE:");
             for (int i = 0; i < bidderAgents.size(); ++i)
-                printInTerminal("1 - "+(bidderAgents.get(i).getName()));
+                System.out.println("1 - "+(bidderAgents.get(i).getName()));
         }
 
         /**
@@ -217,11 +223,15 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handleAllResponses(Vector responses, Vector acceptances) {
-            printInTerminal("DEBUG1");
             // Handles the winner of the auction
             if(responses.size()==1){
                 ACLMessage response = (ACLMessage) responses.get(0);
                 printInTerminal("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+roundCounter+ ".\nHE PAID "+response.getContent()+"$");
+                return;
+            }
+
+            else if (bidderAgents.size()==0){
+                printInTerminal("BIDDER "+lastAcceptedProposal_Bidder.getLocalName()+" WON THE AUCTION At Round "+roundCounter+ ".\nHE PAID "+lastAcceptedProposal_Value+"$");
                 return;
             }
 
@@ -246,41 +256,39 @@ public class AuctioneerAg extends Agent{
                     }
                 }
             }
-            printInTerminal("DEBUG2");
 
             // Highest bidder's message is ACCEPT_PROPOSAL
             if (accept != null) {
                 printInTerminal("Accepting proposal "+bestBidProposal+"$ from responder "+bestBidderProposer.getName());
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
+                lastAcceptedProposal_Bidder = bestBidderProposer;
+                lastAcceptedProposal_Value = bestBidProposal;
             }
-            printInTerminal("DEBUG3");
             // Content of the message is the same for everyone: <HIGHEST_BIDDER_NAME>-<VALUE>
             for(int i = 0; i< acceptances.size(); i++) {
-                ((ACLMessage) responses.get(i)).setContent(bestBidderProposer.getLocalName()+"-"+bestBidProposal);
+                ((ACLMessage) acceptances.get(i)).setContent(bestBidderProposer.getLocalName()+"-"+bestBidProposal);
+                printInTerminal("set content for "+((ACLMessage) acceptances.get(i)).toString());
             }
-            printInTerminal("DEBUG4");
             //CREATES NEW ITERATION
             roundCounter++;
 
-            printInTerminal("-----------NEW ROUND "+ roundCounter+"----------------");
-            ACLMessage newIterationCFP = new ACLMessage(ACLMessage.CFP);
-            for (int i = 0; i < bidderAgents.size(); ++i)
-                newIterationCFP.addReceiver(bidderAgents.get(i));
-            newIterationCFP.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-            newIterationCFP.setContent("Round-"+roundCounter);
-            printInTerminal("DEBUG5");
-            Vector<ACLMessage> v =new Vector<>();
-            v.add(newIterationCFP);
-//            newIteration(v);
-            myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
-
-            //myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
-            printInTerminal("DEBUG6");
+            System.out.println("-----------***********NEW ROUND "+ roundCounter+"***********----------------");
         }
 
         @Override
         protected void handleInform(ACLMessage inform) {
             printInTerminal("Agent "+inform.getSender().getName()+" successfully performed the requested action");
+        }
+
+        @Override
+        protected void handleAllResultNotifications(Vector resultNotifications) {
+            ACLMessage newIterationCFP = new ACLMessage(ACLMessage.CFP);
+            for (int i = 0; i < bidderAgents.size(); ++i)
+                newIterationCFP.addReceiver(bidderAgents.get(i));
+            newIterationCFP.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
+            newIterationCFP.setContent("Round-"+roundCounter);
+
+            myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
         }
     }
 
