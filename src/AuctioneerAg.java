@@ -77,9 +77,9 @@ public class AuctioneerAg extends Agent{
                     bidderAgents = new ArrayList<>();
                     for (int i = 0; i < result.length; ++i) {
                         bidderAgents.add(result[i].getName()) ;
-                        System.out.println(bidderAgents.get(i).getName());
+                        printInTerminal(bidderAgents.get(i).getName());
                     }
-                    // Send the REQUEST to all sellers
+                    // Send the REQUEST to all bidders
                     ACLMessage request = new ACLMessage(ACLMessage.REQUEST);
                     for (int i = 0; i < bidderAgents.size(); ++i)
                         request.addReceiver(bidderAgents.get(i));
@@ -118,7 +118,7 @@ public class AuctioneerAg extends Agent{
             printInTerminal("Auctioneer "+myAgent.getName()+" received REFUSE from "+refuse.getSender().getName());
             // if the answer is REFUSE, the agent is removed from bidderAgents List
             bidderAgents.remove(refuse.getSender());
-            System.out.println("\nBIDDERS ARE:\n");
+            printInTerminal("\nBIDDERS ARE:\n");
             for (int i = 0; i < bidderAgents.size(); ++i)
                 System.out.println("1 - "+(bidderAgents.get(i).getName()));
         }
@@ -144,7 +144,7 @@ public class AuctioneerAg extends Agent{
                 myAgent.addBehaviour(new AuctionRound(myAgent, msg));
             }
             else{
-                System.out.println("ERROR Gathering all responses");
+                printInTerminal("ERROR Gathering all responses");
             }
         }
 
@@ -167,7 +167,7 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handlePropose(ACLMessage propose, Vector v) {
-            System.out.println("Agent "+propose.getSender().getName()+" proposed "+propose.getContent());
+            printInTerminal("Agent "+propose.getSender().getName()+" proposed "+propose.getContent());
         }
 
         /**
@@ -178,13 +178,13 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handleRefuse(ACLMessage refuse) {
-            System.out.println("Agent "+refuse.getSender().getName()+" refused");
+            printInTerminal("Agent "+refuse.getSender().getName()+" refused");
             printInTerminal("Auctioneer "+myAgent.getName()+" received REFUSE from "+refuse.getSender().getName()+" in Round no "+roundCounter);
             // if the answer is REFUSE, the agent is removed from bidderAgents List
             bidderAgents.remove(refuse.getSender());
-            System.out.println("\nBIDDERS ARE:\n");
+            printInTerminal("\nBIDDERS ARE:\n");
             for (int i = 0; i < bidderAgents.size(); ++i)
-                System.out.println("1 - "+(bidderAgents.get(i).getName()));
+                printInTerminal("1 - "+(bidderAgents.get(i).getName()));
         }
 
         /**
@@ -198,10 +198,10 @@ public class AuctioneerAg extends Agent{
 //            if (failure.getSender().equals(myAgent.getAMS())) {
 //                // FAILURE notification from the JADE runtime: the receiver
 //                // does not exist
-//                System.out.println("Responder does not exist");
+//                printInTerminal("Responder does not exist");
 //            }
 //            else {
-//                System.out.println("Agent "+failure.getSender().getName()+" failed");
+//                printInTerminal("Agent "+failure.getSender().getName()+" failed");
 //            }
         }
 
@@ -217,11 +217,11 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handleAllResponses(Vector responses, Vector acceptances) {
-            System.out.println("DEBUG1");
+            printInTerminal("DEBUG1");
             // Handles the winner of the auction
             if(responses.size()==1){
                 ACLMessage response = (ACLMessage) responses.get(0);
-                System.out.println("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+roundCounter+ ".\nHE PAID "+response.getContent()+"$");
+                printInTerminal("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+roundCounter+ ".\nHE PAID "+response.getContent()+"$");
                 return;
             }
 
@@ -246,44 +246,45 @@ public class AuctioneerAg extends Agent{
                     }
                 }
             }
-            System.out.println("DEBUG2");
+            printInTerminal("DEBUG2");
 
             // Highest bidder's message is ACCEPT_PROPOSAL
             if (accept != null) {
-                System.out.println("Accepting proposal "+bestBidProposal+"$ from responder "+bestBidderProposer.getName());
+                printInTerminal("Accepting proposal "+bestBidProposal+"$ from responder "+bestBidderProposer.getName());
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
             }
-            System.out.println("DEBUG3");
+            printInTerminal("DEBUG3");
             // Content of the message is the same for everyone: <HIGHEST_BIDDER_NAME>-<VALUE>
             for(int i = 0; i< acceptances.size(); i++) {
                 ((ACLMessage) responses.get(i)).setContent(bestBidderProposer.getLocalName()+"-"+bestBidProposal);
             }
-            System.out.println("DEBUG4");
+            printInTerminal("DEBUG4");
             //CREATES NEW ITERATION
             roundCounter++;
+
+            printInTerminal("-----------NEW ROUND "+ roundCounter+"----------------");
             ACLMessage newIterationCFP = new ACLMessage(ACLMessage.CFP);
+            for (int i = 0; i < bidderAgents.size(); ++i)
+                newIterationCFP.addReceiver(bidderAgents.get(i));
             newIterationCFP.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
             newIterationCFP.setContent("Round-"+roundCounter);
-            System.out.println("DEBUG5");
-            Vector v =new Vector();
+            printInTerminal("DEBUG5");
+            Vector<ACLMessage> v =new Vector<>();
             v.add(newIterationCFP);
-            //newIteration(v);
-           // myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
-
+//            newIteration(v);
             myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
-            System.out.println("DEBUG6");
+
+            //myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
+            printInTerminal("DEBUG6");
         }
 
         @Override
         protected void handleInform(ACLMessage inform) {
-            System.out.println("Agent "+inform.getSender().getName()+" successfully performed the requested action");
+            printInTerminal("Agent "+inform.getSender().getName()+" successfully performed the requested action");
         }
     }
 
     private void printInTerminal(String msg ){
-        System.out.println("---------------");
-        System.out.println("AUCTIONEER "+getName());
-        System.out.println("---------------");
-        System.out.println(msg+"\n\n");
+        System.out.println("AUCTIONEER "+getLocalName()+ "-> " + msg);
     }
 }

@@ -1,3 +1,5 @@
 src/*.class
 src/*.txt
 src/*.log
+.idea
+.git

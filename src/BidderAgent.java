@@ -85,9 +85,8 @@ public class BidderAgent extends Agent{
          * Handles the request
          */
         protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
-            printInTerminal("Agent "+getLocalName()+": REQUEST received from "+request.getSender().getName()+". Action is "+request.getContent());
-            System.out.println("CONTENT OF REQUEST IS: "+request.getContent());
-            System.out.println("Performative IS: "+request.getPerformative());
+            printInTerminal(": REQUEST received from "+request.getSender().getName()+". Action is "+request.getContent());
+            printInTerminal("CONTENT OF REQUEST IS: "+request.getContent());
             updatePriceFromMsg(request.getContent());
 
 
@@ -95,14 +94,14 @@ public class BidderAgent extends Agent{
                 // We agree to perform the action. Note that in the FIPA-Request
                 // protocol the AGREE message is optional. Return null if you
                 // don't want to send it.
-                printInTerminal("Agent "+getLocalName()+": Agree");
+                printInTerminal(": Agree");
                 ACLMessage agree = request.createReply();
                 agree.setPerformative(myAgent.getLocalName().equals("a")?ACLMessage.REFUSE:ACLMessage.AGREE);
                 return agree;
 //            }
 //            else {
 //                // We refuse to perform the action
-//                printInTerminal("Agent "+getLocalName()+": Refuse");
+//                printInTerminal(": Refuse");
 //                throw new RefuseException("check-failed");
 //            }
         }
@@ -114,7 +113,7 @@ public class BidderAgent extends Agent{
          */
         protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
 //            if (performAction()) {
-//                printInTerminal("Agent "+getLocalName()+": Action successfully performed");
+//                printInTerminal(": Action successfully performed");
                 ACLMessage inform = request.createReply();
                 inform.setPerformative(ACLMessage.INFORM);
                 MessageTemplate template = MessageTemplate.and(
@@ -124,7 +123,7 @@ public class BidderAgent extends Agent{
                 return inform;
 //            }
 //            else {
-//                printInTerminal("Agent "+getLocalName()+": Action failed");
+//                printInTerminal(": Action failed");
 //                throw new FailureException("unexpected-error");
 //            }
         }
@@ -137,11 +136,11 @@ public class BidderAgent extends Agent{
 
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
-            System.out.println("Agent "+getLocalName()+": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
+            printInTerminal(": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
             boolean proposal = evaluateAction();
             if (proposal) {
                 // We provide a proposal
-                System.out.println("Agent "+getLocalName()+": Proposing "+proposal);
+                printInTerminal(": Proposing "+proposal);
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 Random r = new Random();
@@ -150,7 +149,7 @@ public class BidderAgent extends Agent{
             }
             else {
                 // We refuse to provide a proposal
-                System.out.println("Agent "+getLocalName()+": Refuse");
+                printInTerminal(": Refuse");
                 //throw new RefuseException("evaluation-failed");
                 ACLMessage refuse = cfp.createReply();
                 refuse.setPerformative(ACLMessage.REFUSE);
@@ -161,27 +160,36 @@ public class BidderAgent extends Agent{
 
         @Override
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-            System.out.println("Agent "+getLocalName()+": Proposal accepted");
+            printInTerminal(": Proposal accepted");
             if (true) {
-                System.out.println("Agent "+getLocalName()+": Action successfully performed");
+                printInTerminal(": Action successfully performed");
                 ACLMessage inform = accept.createReply();
                 inform.setPerformative(ACLMessage.INFORM);
                 return inform;
             }
             else {
-                System.out.println("Agent "+getLocalName()+": Action execution failed");
+                printInTerminal(": Action execution failed");
                 throw new FailureException("unexpected-error");
             }
         }
 
         @Override
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-            System.out.println("Agent "+getLocalName()+": Proposal rejected");
             super.handleRejectProposal(cfp, propose, reject);
+            if(reject.getContent()!=null){
+
+                printInTerminal(": Proposal rejected");
+
+                printInTerminal(": cfp  ---> "+ cfp.getContent());
+                printInTerminal(": propose  ---> "+ propose.getContent());
+                printInTerminal(": reject  ---> "+ reject.getContent());
+
+                String [] splits = reject.getContent().split("-");
+                printInTerminal(":");
+                printInTerminal(": Current value is  ---> "+ splits[1]);
+            }
+
         }
-
-
-
 
         private boolean evaluateAction() {
             // NESTE CASO ESTOU SEMPRE A BID AO CALHAS, MAS AQUI SUPONHO QUEVAI ENTRAR COMPORTAMENTO/ESTRATEGIA/DINHEIRO QUE TEM
@@ -196,9 +204,6 @@ public class BidderAgent extends Agent{
 
 
     private void printInTerminal(String msg ){
-        System.out.println("---------------");
-        System.out.println("BIDDER "+getName());
-        System.out.println("---------------");
-        System.out.println(msg+"\n\n");
+        System.out.println("BIDDER "+getLocalName()+" -> " +msg);
     }
 }
