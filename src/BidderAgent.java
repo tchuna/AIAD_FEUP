@@ -18,9 +18,10 @@ public class BidderAgent extends Agent{
     private int budget;
     // How aggressive the bidder is - [0-5]
     private int agressivenessLevel;
-
-
     private int currentItemPrice;
+
+    private int currentRound;
+    private AuctionState auctionState;
 
     // Put agent initializations here
     protected void setup() {
@@ -81,12 +82,18 @@ public class BidderAgent extends Agent{
         protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
             printInTerminal(": REQUEST to enter auction received from "+request.getSender().getName()+". Item is "+request.getContent());
             //Update item initial price from ACLMessage
-            updatePriceFromMsg(request.getContent());
+            updateAuctionStateFromMsg(request.getContent());
 
             if (isParticipatingInAuction()) {
                 printInTerminal(": I will send AGREE to participate.");
                 ACLMessage agree = request.createReply();
                 agree.setPerformative(ACLMessage.AGREE);
+
+                //Creates AuctionState
+                auctionState = new AuctionState();
+                String[] splits = request.getContent().split("-");
+                auctionState.setItemBeingAutioned(new Item(splits[0], splits[2], Integer.parseInt(splits[1])));
+
                 return agree;
             } else {
                 printInTerminal(": I will send REFUSE to participate.");
@@ -134,6 +141,8 @@ public class BidderAgent extends Agent{
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
             printInTerminal(" CFP received from "+cfp.getSender().getName()+". "+cfp.getContent());
+            updateCurrentRound(cfp.getContent());
+
             int proposal = prepareBid();
             if (proposal!=0) {
                 // We provide a proposal
@@ -157,7 +166,7 @@ public class BidderAgent extends Agent{
             printInTerminal(" (Recieved ACCEPT_PROPOSAL)I had the highest biddder this round.");
 
             if(accept!=null)
-                updatePriceFromMsg(accept.getContent());
+                updateAuctionStateFromMsg(accept.getContent());
 
             if (true) {
                 printInTerminal(" (SENDING INFORM) I'm sending inform_done since I had the highest bid this round )");
@@ -175,7 +184,7 @@ public class BidderAgent extends Agent{
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
             printInTerminal(" (Recieved REJECT_PROPOSAL) My bid was not the highest this round.\"");
             if(reject.getContent()!=null){
-                updatePriceFromMsg(reject.getContent());
+                updateAuctionStateFromMsg(reject.getContent());
             }
             super.handleRejectProposal(cfp, propose, reject);
         }
@@ -198,11 +207,19 @@ public class BidderAgent extends Agent{
         }
     }
 
-    private void updatePriceFromMsg(String msg){
+    private void updateAuctionStateFromMsg(String msg){
         String [] splits = msg.split("-");
-        this.currentItemPrice=Integer.parseInt(splits[1]);
+        RoundState rState = new RoundState(this.currentRound, splits[0],  Integer.parseInt(splits[1]));
+        auctionState.updateRoundHistory(rState);
     }
 
+    private void updateCurrentRound(String msg){
+        String [] splits = msg.split("-");
+        if(splits[0].equals("Round"))
+            this.currentRound=Integer.parseInt(splits[1]);
+        else
+            printInTerminal("AN ERROR HAS OCCURED WHILE RECEIVING CFP");
+    }
 
     private void printInTerminal(String msg ){
         System.out.println("BIDDER "+getLocalName()+" -> " +msg);

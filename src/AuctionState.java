@@ -20,11 +20,15 @@ public class AuctionState {
         this.roundHistory = roundHistory;
     }
 
-    private void updateRoundHistory(RoundState roundState){
+    public void updateRoundHistory(RoundState roundState){
         this.roundHistory.add(roundState);
     }
 
-    private int getRound(){
-        return this.roundHistory.get(this.roundHistory.size()-1).getRoundNr();
+    public RoundState getRound(){
+        return this.roundHistory.get(this.roundHistory.size()-1);
+    }
+
+    public int getCurrentPrice() {
+        return roundHistory.get(this.roundHistory.size()-1).getCurrentPrice();
     }
 }
