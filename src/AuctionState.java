@@ -4,6 +4,11 @@ public class AuctionState {
     private Item itemBeingAutioned;
     private ArrayList<RoundState> roundHistory;
 
+    public AuctionState(Item item){
+        this.itemBeingAutioned = item;
+        roundHistory = new ArrayList<RoundState>();
+    }
+
     public Item getItemBeingAutioned() {
         return itemBeingAutioned;
     }
@@ -25,6 +30,7 @@ public class AuctionState {
     }
 
     public RoundState getRound(){
+        if (roundHistory.size() == 0) return null;
         return this.roundHistory.get(this.roundHistory.size()-1);
     }
 
