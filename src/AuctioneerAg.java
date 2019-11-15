@@ -34,7 +34,7 @@ public class AuctioneerAg extends Agent{
     private AID lastAcceptedProposal_Bidder ;
     private int lastAcceptedProposal_Value ;
 
-    private Item itemBeingSold;
+    private AuctionState auctionState;
 
 
     // Put agent initializations here
@@ -42,7 +42,7 @@ public class AuctioneerAg extends Agent{
         // Create and show the GUI
        // myGui = new CreateAuctionGui(this);
         //myGui.showGui();
-        itemBeingSold = new Item("Cadeira", "Furniture", 10);
+       auctionState = new AuctionState(new Item("Cadeira", "Furniture", 10));
 
     }
 
@@ -65,8 +65,8 @@ public class AuctioneerAg extends Agent{
                 //itemName=name;
                 //startingPrice=price;
 
-                printInTerminal("Started the auction of the item --> "+itemBeingSold.getName()+" <-- ");
-                printInTerminal("\nStarting price is --> "+itemBeingSold.getStartingPrice()+" $");
+                printInTerminal("Started the auction of the item --> "+auctionState.getItemBeingAutioned().getName()+" <-- ");
+                printInTerminal("\nStarting price is --> "+auctionState.getItemBeingAutioned().getStartingPrice()+" $");
             }
         } );
 
@@ -93,11 +93,12 @@ public class AuctioneerAg extends Agent{
                     for (int i = 0; i < bidderAgents.size(); ++i)
                         request.addReceiver(bidderAgents.get(i));
                     request.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-                    request.setContent(itemBeingSold.getName()+"-"+itemBeingSold.getStartingPrice()+"-"+itemBeingSold.getCategory());
+                    request.setContent(auctionState.getItemBeingAutioned().getName()+"-"+auctionState.getItemBeingAutioned().getStartingPrice()+"-"+auctionState.getItemBeingAutioned().getCategory());
 //                  request.setConversationId("Auction");
                     request.setReplyWith("req"+System.currentTimeMillis()); // Unique value
 
                     addBehaviour(new AchieveREInitiatorAuctioneer(myAgent, request));
+
                 }
                 catch (FIPAException fe) {
                     fe.printStackTrace();
@@ -173,6 +174,7 @@ public class AuctioneerAg extends Agent{
     private class AuctionRound extends ContractNetInitiator{
         public AuctionRound(Agent a, ACLMessage cfp) {
             super(a, cfp);
+
         }
 
         /**
@@ -232,12 +234,12 @@ public class AuctioneerAg extends Agent{
             // Handles the winner of the auction
             if(responses.size()==1){
                 ACLMessage response = (ACLMessage) responses.get(0);
-                printInTerminal("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+roundCounter+ ".\nHE PAID "+response.getContent()+"$");
+                printInTerminal("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+((auctionState.getRound() == null)?"0":auctionState.getRound().getRoundNr())+ ".\nHE PAID "+response.getContent()+"$");
                 return;
             }
 
             else if (bidderAgents.size()==0){
-                printInTerminal("BIDDER "+lastAcceptedProposal_Bidder.getLocalName()+" WON THE AUCTION At Round "+roundCounter+ ".\nHE PAID "+lastAcceptedProposal_Value+"$");
+                printInTerminal("BIDDER "+lastAcceptedProposal_Bidder.getLocalName()+" WON THE AUCTION At Round "+((auctionState.getRound() == null)?"0":auctionState.getRound().getRoundNr())+ ".\nHE PAID "+lastAcceptedProposal_Value+"$");
                 return;
             }
 
@@ -269,18 +271,13 @@ public class AuctioneerAg extends Agent{
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 lastAcceptedProposal_Bidder = bestBidderProposer;
                 lastAcceptedProposal_Value = bestBidProposal;
+                auctionState.updateRoundHistory(new RoundState(roundCounter,bestBidderProposer.getLocalName(), bestBidProposal));
             }
             // Content of the message is the same for everyone: <HIGHEST_BIDDER_NAME>-<VALUE>
             for(int i = 0; i< acceptances.size(); i++) {
                 ((ACLMessage) acceptances.get(i)).setContent(bestBidderProposer.getLocalName()+"-"+bestBidProposal);
             }
-            //CREATES NEW ITERATION
-            roundCounter++;
 
-            System.out.println("NEW ROUND -> round #"+ roundCounter+"#####################################################################");
-            System.out.println("BIDDERS ARE:");
-            for (int i = 0; i < bidderAgents.size(); ++i)
-                System.out.println(i+" - "+(bidderAgents.get(i).getName()));
         }
 
         @Override
@@ -295,6 +292,14 @@ public class AuctioneerAg extends Agent{
                 newIterationCFP.addReceiver(bidderAgents.get(i));
             newIterationCFP.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
             newIterationCFP.setContent("Round-"+roundCounter);
+
+            //CREATES NEW ITERATION
+            roundCounter++;
+
+            System.out.println("NEW ROUND -> round #"+ ((auctionState.getRound() == null)?"0":auctionState.getRound().getRoundNr())+"#####################################################################");
+            System.out.println("BIDDERS ARE:");
+            for (int i = 0; i < bidderAgents.size(); ++i)
+                System.out.println(i+" - "+(bidderAgents.get(i).getName()));
 
             myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
         }
