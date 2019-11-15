@@ -24,9 +24,9 @@ public class AuctioneerAg extends Agent{
     // The list of known BIDDER agents
     private List<AID> bidderAgents;
     // Name of item being auctioned
-    private String itemName;
+   // private String itemName;
     // Starting price of the item
-    private int startingPrice;
+    //private int startingPrice;
 
     private int roundCounter=0;
 
@@ -34,12 +34,15 @@ public class AuctioneerAg extends Agent{
     private AID lastAcceptedProposal_Bidder ;
     private int lastAcceptedProposal_Value ;
 
+    private Item itemBeingSold;
+
 
     // Put agent initializations here
     protected void setup() {
         // Create and show the GUI
-        myGui = new CreateAuctionGui(this);
-        myGui.showGui();
+       // myGui = new CreateAuctionGui(this);
+        //myGui.showGui();
+        itemBeingSold = new Item("Cadeira", "Furniture", 10);
 
     }
 
@@ -59,10 +62,11 @@ public class AuctioneerAg extends Agent{
         addBehaviour(new OneShotBehaviour() {
             public void action() {
                 // Sets the variables values defined in the GUI
-                itemName=name;
-                startingPrice=price;
-                printInTerminal("Started the auction of the item --> "+itemName+" <-- ");
-                printInTerminal("\nStarting price is --> "+startingPrice+" $");
+                //itemName=name;
+                //startingPrice=price;
+
+                printInTerminal("Started the auction of the item --> "+itemBeingSold.getName()+" <-- ");
+                printInTerminal("\nStarting price is --> "+itemBeingSold.getStartingPrice()+" $");
             }
         } );
 
@@ -89,7 +93,7 @@ public class AuctioneerAg extends Agent{
                     for (int i = 0; i < bidderAgents.size(); ++i)
                         request.addReceiver(bidderAgents.get(i));
                     request.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
-                    request.setContent(itemName+"-"+startingPrice);
+                    request.setContent(itemBeingSold.getName()+"-"+itemBeingSold.getStartingPrice()+"-"+itemBeingSold.getCategory());
 //                  request.setConversationId("Auction");
                     request.setReplyWith("req"+System.currentTimeMillis()); // Unique value
 

@@ -3,3 +3,6 @@ src/*.txt
 src/*.log
 .idea
 .git
+src/out
+APDescription.txt
+MTPs-Main-Container.txt

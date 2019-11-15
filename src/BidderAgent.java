@@ -19,13 +19,13 @@ public class BidderAgent extends Agent{
     // How aggressive the bidder is - [0-5]
     private int agressivenessLevel;
 
+
     private int currentItemPrice;
 
     // Put agent initializations here
     protected void setup() {
         // Get the bidder's characteristics
         Object[] args = getArguments();
-//        budget=100;
 
         if (args != null && args.length > 0) {
 
