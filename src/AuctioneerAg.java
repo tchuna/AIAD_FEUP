@@ -90,13 +90,10 @@ public class AuctioneerAg extends Agent{
                         request.addReceiver(bidderAgents.get(i));
                     request.setProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST);
                     request.setContent(itemName+"-"+startingPrice);
-//                    request.setConversationId("Auction");
+//                  request.setConversationId("Auction");
                     request.setReplyWith("req"+System.currentTimeMillis()); // Unique value
 
                     addBehaviour(new AchieveREInitiatorAuctioneer(myAgent, request));
-//                    // Prepare the template to get proposals
-//                    mt = MessageTemplate.and(MessageTemplate.MatchConversationId("book-trade"),
-//                            MessageTemplate.MatchInReplyTo(cfp.getReplyWith()));
                 }
                 catch (FIPAException fe) {
                     fe.printStackTrace();
@@ -106,6 +103,10 @@ public class AuctioneerAg extends Agent{
 
     }
 
+    //------------------------------------------------------------------------------------------------------------------
+    // Send REQUEST message to the bidders found
+    // AKA: FIPA-Request-Protocol
+    //------------------------------------------------------------------------------------------------------------------
     private class AchieveREInitiatorAuctioneer extends AchieveREInitiator {
         public AchieveREInitiatorAuctioneer(Agent a, ACLMessage msg) {
             super(a, msg);
@@ -114,24 +115,24 @@ public class AuctioneerAg extends Agent{
         @Override
         protected void handleAgree(ACLMessage agree) {
             super.handleAgree(agree);
-            printInTerminal("Auctioneer "+myAgent.getName()+" received AGREE from "+agree.getSender().getName());
+            printInTerminal("received AGREE from "+agree.getSender().getName());
         }
 
         @Override
         protected void handleRefuse(ACLMessage refuse) {
             super.handleRefuse(refuse);
-            printInTerminal("Auctioneer "+myAgent.getName()+" received REFUSE from "+refuse.getSender().getName());
+            printInTerminal("received REFUSE from "+refuse.getSender().getName());
             // if the answer is REFUSE, the agent is removed from bidderAgents List
-            bidderAgents.remove(refuse.getSender());
-            printInTerminal("\nBIDDERS ARE:\n");
-            for (int i = 0; i < bidderAgents.size(); ++i)
-                System.out.println("1 - "+(bidderAgents.get(i).getName()));
+//            bidderAgents.remove(refuse.getSender());
+//            printInTerminal("\nBIDDERS ARE:\n");
+//            for (int i = 0; i < bidderAgents.size(); ++i)
+//                System.out.println("1 - "+(bidderAgents.get(i).getName()));
         }
 
         @Override
         protected void handleInform(ACLMessage inform) {
             super.handleInform(inform);
-            printInTerminal("Auctioneer "+myAgent.getName()+" received INFORM from "+inform.getSender().getName());
+            printInTerminal("received INFORM from "+inform.getSender().getName());
         }
 
         @Override
@@ -146,11 +147,11 @@ public class AuctioneerAg extends Agent{
                 msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
                 msg.setContent("Round-"+roundCounter);
                 // Launch first ROUND
-                System.out.println("-----------***********NEW ROUND "+ roundCounter+"***********----------------");
+                System.out.println("-----------***********FIRST ROUND WILL START***********----------------");
                 myAgent.addBehaviour(new AuctionRound(myAgent, msg));
             }
             else{
-                printInTerminal("ERROR Gathering all responses");
+                printInTerminal("ERROR Gathering all responses in request protocol");
             }
         }
 
@@ -160,6 +161,11 @@ public class AuctioneerAg extends Agent{
         }
     }
 
+
+    //------------------------------------------------------------------------------------------------------------------
+    // Play the Auction bidding rounds
+    // AKA: FIPA-Contract-Net
+    //------------------------------------------------------------------------------------------------------------------
     private class AuctionRound extends ContractNetInitiator{
         public AuctionRound(Agent a, ACLMessage cfp) {
             super(a, cfp);
@@ -173,7 +179,7 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handlePropose(ACLMessage propose, Vector v) {
-            printInTerminal("Agent "+propose.getSender().getName()+" proposed "+propose.getContent());
+            printInTerminal(" (RECIEVED PROPOSE) From "+propose.getSender().getName()+" to round "+roundCounter+" with "+propose.getContent()+"$.");
         }
 
         /**
@@ -184,13 +190,9 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handleRefuse(ACLMessage refuse) {
-            printInTerminal("Agent "+refuse.getSender().getName()+" refused");
-            printInTerminal("Auctioneer "+myAgent.getName()+" received REFUSE from "+refuse.getSender().getName()+" in Round no "+roundCounter);
+            printInTerminal(" (RECIEVED REFUSE) From "+refuse.getSender().getName()+" to round "+roundCounter+" with "+refuse.getContent()+"$.");
             // if the answer is REFUSE, the agent is removed from bidderAgents List
             bidderAgents.remove(refuse.getSender());
-            printInTerminal("\nBIDDERS ARE:");
-            for (int i = 0; i < bidderAgents.size(); ++i)
-                System.out.println("1 - "+(bidderAgents.get(i).getName()));
         }
 
         /**
@@ -259,7 +261,7 @@ public class AuctioneerAg extends Agent{
 
             // Highest bidder's message is ACCEPT_PROPOSAL
             if (accept != null) {
-                printInTerminal("Accepting proposal "+bestBidProposal+"$ from responder "+bestBidderProposer.getName());
+                printInTerminal("(SENDING ACCEPT_PROPOSAL) To"+bestBidderProposer.getName() +" from bid "+ bestBidProposal+"$.");
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
                 lastAcceptedProposal_Bidder = bestBidderProposer;
                 lastAcceptedProposal_Value = bestBidProposal;
@@ -267,12 +269,14 @@ public class AuctioneerAg extends Agent{
             // Content of the message is the same for everyone: <HIGHEST_BIDDER_NAME>-<VALUE>
             for(int i = 0; i< acceptances.size(); i++) {
                 ((ACLMessage) acceptances.get(i)).setContent(bestBidderProposer.getLocalName()+"-"+bestBidProposal);
-                printInTerminal("set content for "+((ACLMessage) acceptances.get(i)).toString());
             }
             //CREATES NEW ITERATION
             roundCounter++;
 
-            System.out.println("-----------***********NEW ROUND "+ roundCounter+"***********----------------");
+            System.out.println("NEW ROUND -> round #"+ roundCounter+"#####################################################################");
+            System.out.println("BIDDERS ARE:");
+            for (int i = 0; i < bidderAgents.size(); ++i)
+                System.out.println(i+" - "+(bidderAgents.get(i).getName()));
         }
 
         @Override

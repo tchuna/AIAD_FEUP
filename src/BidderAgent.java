@@ -30,7 +30,6 @@ public class BidderAgent extends Agent{
         if (args != null && args.length > 0) {
             //
             printInTerminal("Args: "+ Arrays.toString(args));
-//            budget=100;
         }
 
         // Register the BIDDER service in the yellow pages
@@ -46,21 +45,6 @@ public class BidderAgent extends Agent{
         catch (FIPAException fe) {
             fe.printStackTrace();
         }
-//        addBehaviour(new CyclicBehaviour() {
-//            @Override
-//            public void action() {
-//                MessageTemplate mt = MessageTemplate.MatchPerformative(ACLMessage.CFP);
-//                ACLMessage msg = myAgent.receive(mt);
-//                if (msg != null) {
-//                    // CFP Message received. Process it
-//                    String info = msg.getContent();
-//                    printInTerminal(getAID().getName()+" has received new auction message --> "+info);
-//                }
-//                else {
-//                    block();
-//                }
-//            }
-//        });
 
         MessageTemplate template = MessageTemplate.and(
                 MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_REQUEST),
@@ -81,70 +65,64 @@ public class BidderAgent extends Agent{
         printInTerminal("Bidder-agent "+getAID().getName()+" terminating.");
     }
 
-
+    //------------------------------------------------------------------------------------------------------------------
+    // Accept or Refuse entering the Auction.
+    // AKA: FIPA-Request-Protocol
+    //------------------------------------------------------------------------------------------------------------------
     private class AchieveREResponderBidder extends AchieveREResponder {
         public AchieveREResponderBidder(Agent a, MessageTemplate mt) {
             super(a, mt);
         }
-        /**
-         * Handles the request
-         */
+
+
         protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
-            printInTerminal(": REQUEST received from "+request.getSender().getName()+". Action is "+request.getContent());
-            printInTerminal("CONTENT OF REQUEST IS: "+request.getContent());
+            printInTerminal(": REQUEST to enter auction received from "+request.getSender().getName()+". Item is "+request.getContent());
+            //Update item initial price from ACLMessage
             updatePriceFromMsg(request.getContent());
 
             if (isParticipatingInAuction()) {
-                // We agree to perform the action. Note that in the FIPA-Request
-                // protocol the AGREE message is optional. Return null if you
-                // don't want to send it.
-                printInTerminal(": Agree");
+                printInTerminal(": I will send AGREE to participate.");
                 ACLMessage agree = request.createReply();
                 agree.setPerformative(ACLMessage.AGREE);
                 return agree;
-            }
-
-            else {
+            } else {
+                printInTerminal(": I will send REFUSE to participate.");
                 ACLMessage refuse = request.createReply();
                 refuse.setPerformative(ACLMessage.REFUSE);
                 return refuse;
             }
-
-//            else {
-//                // We refuse to perform the action
-//                printInTerminal(": Refuse");
-//                throw new RefuseException("check-failed");
-//            }
         }
+
         /**
          * This method is called after the execution of the handleRequest() method if
          * no response was sent or the response was an AGREE message.
-         * This default implementation returns null which has the effect of sending no result notification.
-         * Programmers should override the method in case they need to react to this event.
          */
         protected ACLMessage prepareResultNotification(ACLMessage request, ACLMessage response) throws FailureException {
-//            if (performAction()) {
-//                printInTerminal(": Action successfully performed");
-                ACLMessage inform = request.createReply();
-                inform.setPerformative(ACLMessage.INFORM);
-                MessageTemplate template = MessageTemplate.and(
-  		            MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
-                      MessageTemplate.MatchPerformative(ACLMessage.CFP) );
-                myAgent.addBehaviour(new AuctionRoundBidder(myAgent, template));
-                return inform;
-//            }
-//            else {
-//                printInTerminal(": Action failed");
-//                throw new FailureException("unexpected-error");
-//            }
+
+            //Create message template for contract net and adding the new behaviuor to the Bidder.
+            MessageTemplate template = MessageTemplate.and(
+                    MessageTemplate.MatchProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET),
+                    MessageTemplate.MatchPerformative(ACLMessage.CFP) );
+            myAgent.addBehaviour(new AuctionRoundBidder(myAgent, template));
+
+            //If Bidder Agreed, send INFORM msg to Auctioneer, acording to FIPA-REQUEST-PROTOCOL
+            printInTerminal(": I will send INFORM Auctioneear acording to FIPA-REQUEST rules.");
+            ACLMessage inform = request.createReply();
+            inform.setPerformative(ACLMessage.INFORM);
+            return inform;
         }
+
+        //TODO: Decide if bidder ir entering the auction or not.
         private boolean isParticipatingInAuction(){
-            if(currentItemPrice>=budget)
-                return false;
-            return true;
+            return (currentItemPrice>=budget)? false : true; //atm the bidder always participates if his/her budget is higher than the item price
         }
     }
 
+
+    //------------------------------------------------------------------------------------------------------------------
+    // Play the Auction bidding rounds
+    // AKA: FIPA-Contract-Net
+    //------------------------------------------------------------------------------------------------------------------
     private class AuctionRoundBidder extends ContractNetResponder{
         public AuctionRoundBidder(Agent a, MessageTemplate mt) {
             super(a, mt);
@@ -152,11 +130,11 @@ public class BidderAgent extends Agent{
 
         @Override
         protected ACLMessage handleCfp(ACLMessage cfp) throws NotUnderstoodException, RefuseException {
-            printInTerminal(": CFP received from "+cfp.getSender().getName()+". Action is "+cfp.getContent());
+            printInTerminal(" CFP received from "+cfp.getSender().getName()+". "+cfp.getContent());
             int proposal = prepareBid();
             if (proposal!=0) {
                 // We provide a proposal
-                printInTerminal(": Proposing "+proposal);
+                printInTerminal(" (PROPOSE) Item price is "+currentItemPrice+"$, in "+cfp.getContent()+" I'm bidding "+proposal+"$.");
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 propose.setContent(String.valueOf(proposal));
@@ -164,24 +142,22 @@ public class BidderAgent extends Agent{
             }
             else {
                 // We refuse to provide a proposal
-                printInTerminal(": Refuse");
-                //throw new RefuseException("evaluation-failed");
+                printInTerminal(" (REFUSE) Item price is "+currentItemPrice+"$, in "+cfp.getContent()+" I'm refusing to bid and leaving the Auction.");
                 ACLMessage refuse = cfp.createReply();
                 refuse.setPerformative(ACLMessage.REFUSE);
-               // refuse.setContent(String.valueOf(proposal));
                 return refuse;
             }
         }
 
         @Override
         protected ACLMessage handleAcceptProposal(ACLMessage cfp, ACLMessage propose,ACLMessage accept) throws FailureException {
-            printInTerminal(": Proposal accepted");
+            printInTerminal(" (Recieved ACCEPT_PROPOSAL)I had the highest biddder this round.");
 
             if(accept!=null)
                 updatePriceFromMsg(accept.getContent());
 
             if (true) {
-                printInTerminal(": Action successfully performed");
+                printInTerminal(" (SENDING INFORM) I'm sending inform_done since I had the highest bid this round )");
                 ACLMessage inform = accept.createReply();
                 inform.setPerformative(ACLMessage.INFORM);
                 return inform;
@@ -194,26 +170,18 @@ public class BidderAgent extends Agent{
 
         @Override
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-            printInTerminal(": Proposal rejected");
+            printInTerminal(" (Recieved REJECT_PROPOSAL) My bid was not the highest this round.\"");
             if(reject.getContent()!=null){
-//
-//                printInTerminal(": cfp  ---> "+ cfp.getContent());
-//                printInTerminal(": propose  ---> "+ propose.getContent());
-//                printInTerminal(": reject  ---> "+ reject.getContent());
-
                 updatePriceFromMsg(reject.getContent());
-                printInTerminal(":");
-                printInTerminal(": Current value is  ---> "+ currentItemPrice);
             }
             super.handleRejectProposal(cfp, propose, reject);
         }
 
+        //returns value to bid or zero if the bidder does not want to bid
         private int prepareBid() {
             if(currentItemPrice>=budget)
                 return 0;
-
             //TODO: Evaluate agressiveness here
-
             Random r = new Random();
             int bid = r.nextInt(budget-currentItemPrice)+currentItemPrice+1; //randomizing between currprice and budget -- this is stupid
             return bid;
