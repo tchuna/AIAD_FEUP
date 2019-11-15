@@ -19,17 +19,18 @@ public class BidderAgent extends Agent{
     // How aggressive the bidder is
     private int agressivenessLevel;
 
+
     private int currentItemPrice;
 
     // Put agent initializations here
     protected void setup() {
         // Get the bidder's characteristics
         Object[] args = getArguments();
-        budget=100;
 
-        if (args != null && args.length > 0) {
-            //
-            printInTerminal("Args: "+ Arrays.toString(args));
+        if (args != null && args.length == 2) {
+            budget = (Integer) args[0];
+            agressivenessLevel = (Integer) args[1];
+
         }
 
         // Register the BIDDER service in the yellow pages
