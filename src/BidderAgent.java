@@ -16,7 +16,7 @@ import java.util.Random;
 public class BidderAgent extends Agent{
     // Ammount of money available to spend in this auction
     private int budget;
-    // How aggressive the bidder is
+    // How aggressive the bidder is - [0-5]
     private int agressivenessLevel;
 
 
@@ -27,9 +27,11 @@ public class BidderAgent extends Agent{
         // Get the bidder's characteristics
         Object[] args = getArguments();
 
-        if (args != null && args.length == 2) {
-            budget = (Integer) args[0];
-            agressivenessLevel = (Integer) args[1];
+        if (args != null && args.length > 0) {
+
+            printInTerminal("Args: "+ Arrays.toString(args));
+            budget=(Integer)args[0];
+            agressivenessLevel=(Integer)args[1];
 
         }
 
@@ -178,11 +180,18 @@ public class BidderAgent extends Agent{
             super.handleRejectProposal(cfp, propose, reject);
         }
 
-        //returns value to bid or zero if the bidder does not want to bid
+        //returns value to bid OR zero if the bidder does not want to bid
         private int prepareBid() {
             if(currentItemPrice>=budget)
                 return 0;
             //TODO: Evaluate agressiveness here
+
+            float percentageOfBudget; //the percentage value that the current price represents related to the bidder's budget
+            percentageOfBudget = (float)currentItemPrice/budget;
+//            if( auctionState.getRound()>0 ){
+//
+//            }
+
             Random r = new Random();
             int bid = r.nextInt(budget-currentItemPrice)+currentItemPrice+1; //randomizing between currprice and budget -- this is stupid
             return bid;
