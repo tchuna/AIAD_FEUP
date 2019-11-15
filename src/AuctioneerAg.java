@@ -42,7 +42,8 @@ public class AuctioneerAg extends Agent{
         // Create and show the GUI
        // myGui = new CreateAuctionGui(this);
         //myGui.showGui();
-       auctionState = new AuctionState(new Item("Cadeira", "Furniture", 10));
+        auctionState = new AuctionState(new Item("Cadeira", "Furniture", 10));
+        startAuction(auctionState.getItemBeingAutioned().getName(), auctionState.getItemBeingAutioned().getStartingPrice());
 
     }
 

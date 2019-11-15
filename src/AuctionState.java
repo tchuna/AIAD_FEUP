@@ -9,6 +9,10 @@ public class AuctionState {
         roundHistory = new ArrayList<RoundState>();
     }
 
+    public AuctionState(){
+        roundHistory = new ArrayList<RoundState>();
+    }
+
     public Item getItemBeingAutioned() {
         return itemBeingAutioned;
     }
@@ -35,6 +39,7 @@ public class AuctionState {
     }
 
     public int getCurrentPrice() {
+        if (roundHistory.size() == 0) return itemBeingAutioned.getStartingPrice();
         return roundHistory.get(this.roundHistory.size()-1).getCurrentPrice();
     }
 }

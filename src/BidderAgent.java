@@ -18,7 +18,6 @@ public class BidderAgent extends Agent{
     private int budget;
     // How aggressive the bidder is - [0-5]
     private int agressivenessLevel;
-    private int currentItemPrice;
 
     private int currentRound;
     private AuctionState auctionState;
@@ -31,8 +30,8 @@ public class BidderAgent extends Agent{
         if (args != null && args.length > 0) {
 
             printInTerminal("Args: "+ Arrays.toString(args));
-            budget=(Integer)args[0];
-            agressivenessLevel=(Integer)args[1];
+            budget=Integer.parseInt((String)args[0]);
+            agressivenessLevel=Integer.parseInt((String)args[1]);
 
         }
 
@@ -78,13 +77,11 @@ public class BidderAgent extends Agent{
             super(a, mt);
         }
 
-
         protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
             printInTerminal(": REQUEST to enter auction received from "+request.getSender().getName()+". Item is "+request.getContent());
             //Update item initial price from ACLMessage
-            updateAuctionStateFromMsg(request.getContent());
 
-            if (isParticipatingInAuction()) {
+            if (isParticipatingInAuction(Integer.parseInt(request.getContent().split("-")[1]))) {
                 printInTerminal(": I will send AGREE to participate.");
                 ACLMessage agree = request.createReply();
                 agree.setPerformative(ACLMessage.AGREE);
@@ -123,8 +120,8 @@ public class BidderAgent extends Agent{
         }
 
         //TODO: Decide if bidder ir entering the auction or not.
-        private boolean isParticipatingInAuction(){
-            return (currentItemPrice>=budget)? false : true; //atm the bidder always participates if his/her budget is higher than the item price
+        private boolean isParticipatingInAuction(int price){
+            return (price<=budget); //atm the bidder always participates if his/her budget is higher than the item price
         }
     }
 
@@ -146,7 +143,7 @@ public class BidderAgent extends Agent{
             int proposal = prepareBid();
             if (proposal!=0) {
                 // We provide a proposal
-                printInTerminal(" (PROPOSE) Item price is "+currentItemPrice+"$, in "+cfp.getContent()+" I'm bidding "+proposal+"$.");
+                printInTerminal(" (PROPOSE) Item price is "+auctionState.getCurrentPrice()+"$, in "+cfp.getContent()+" I'm bidding "+proposal+"$.");
                 ACLMessage propose = cfp.createReply();
                 propose.setPerformative(ACLMessage.PROPOSE);
                 propose.setContent(String.valueOf(proposal));
@@ -154,7 +151,7 @@ public class BidderAgent extends Agent{
             }
             else {
                 // We refuse to provide a proposal
-                printInTerminal(" (REFUSE) Item price is "+currentItemPrice+"$, in "+cfp.getContent()+" I'm refusing to bid and leaving the Auction.");
+                printInTerminal(" (REFUSE) Item price is "+auctionState.getCurrentPrice()+"$, in "+cfp.getContent()+" I'm refusing to bid and leaving the Auction.");
                 ACLMessage refuse = cfp.createReply();
                 refuse.setPerformative(ACLMessage.REFUSE);
                 return refuse;
@@ -191,18 +188,18 @@ public class BidderAgent extends Agent{
 
         //returns value to bid OR zero if the bidder does not want to bid
         private int prepareBid() {
-            if(currentItemPrice>=budget)
+            if(auctionState.getCurrentPrice()>=budget)
                 return 0;
             //TODO: Evaluate agressiveness here
 
             float percentageOfBudget; //the percentage value that the current price represents related to the bidder's budget
-            percentageOfBudget = (float)currentItemPrice/budget;
+            percentageOfBudget = (float)auctionState.getCurrentPrice()/budget;
 //            if( auctionState.getRound()>0 ){
 //
 //            }
 
             Random r = new Random();
-            int bid = r.nextInt(budget-currentItemPrice)+currentItemPrice+1; //randomizing between currprice and budget -- this is stupid
+            int bid = r.nextInt(budget-auctionState.getCurrentPrice())+auctionState.getCurrentPrice()+1; //randomizing between currprice and budget -- this is stupid
             return bid;
         }
     }
