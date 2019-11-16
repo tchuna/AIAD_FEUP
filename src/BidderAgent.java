@@ -10,8 +10,10 @@ import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREResponder;
 import jade.proto.ContractNetResponder;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+
 
 public class BidderAgent extends Agent{
     // Ammount of money available to spend in this auction
@@ -21,6 +23,7 @@ public class BidderAgent extends Agent{
 
     private int currentRound;
     private AuctionState auctionState;
+    private ArrayList<String> interests = new ArrayList<String>();
 
     // Put agent initializations here
     protected void setup() {
@@ -32,8 +35,20 @@ public class BidderAgent extends Agent{
             printInTerminal("Args: "+ Arrays.toString(args));
             budget=Integer.parseInt((String)args[0]);
             agressivenessLevel=Integer.parseInt((String)args[1]);
+           if(args.length >2) {
+                for (int i = 2; i < args.length; i++) {
+                  interests.add((String) args[i]);
+               }
+           }
 
         }
+
+//        String initalValeus = "budget= "+budget+", and my interest are: ";
+//        for(int i =0; i<interests.size();i++){
+//            initalValeus+= interests.get(i)+", ";
+//        }
+//
+//        printInTerminal(initalValeus);
 
         // Register the BIDDER service in the yellow pages
         DFAgentDescription dfd = new DFAgentDescription();
@@ -79,6 +94,13 @@ public class BidderAgent extends Agent{
 
         protected ACLMessage handleRequest(ACLMessage request) throws NotUnderstoodException, RefuseException {
             printInTerminal(": REQUEST to enter auction received from "+request.getSender().getName()+". Item is "+request.getContent());
+
+            //---------------------
+            auctionState = new AuctionState();
+            String[] splits = request.getContent().split("-");
+            auctionState.setItemBeingAutioned(new Item(splits[0], splits[2], Integer.parseInt(splits[1])));
+
+            //--------------------
             //Update item initial price from ACLMessage
 
             if (isParticipatingInAuction(Integer.parseInt(request.getContent().split("-")[1]))) {
@@ -87,9 +109,9 @@ public class BidderAgent extends Agent{
                 agree.setPerformative(ACLMessage.AGREE);
 
                 //Creates AuctionState
-                auctionState = new AuctionState();
-                String[] splits = request.getContent().split("-");
-                auctionState.setItemBeingAutioned(new Item(splits[0], splits[2], Integer.parseInt(splits[1])));
+//                auctionState = new AuctionState();
+//                String[] splits = request.getContent().split("-");
+//                auctionState.setItemBeingAutioned(new Item(splits[0], splits[2], Integer.parseInt(splits[1])));
 
                 return agree;
             } else {
@@ -121,6 +143,14 @@ public class BidderAgent extends Agent{
 
         //TODO: Decide if bidder ir entering the auction or not.
         private boolean isParticipatingInAuction(int price){
+            //se nao for interesse e agressivvidade =1 nao vai
+            if(!interests.contains(auctionState.getItemBeingAutioned().getCategory()) && agressivenessLevel <=1)
+                return false;
+            //-----------
+            //----------- se nao for interesse so vai se custar menos de 10% do budget
+            if(!interests.contains(auctionState.getItemBeingAutioned().getCategory()) && auctionState.getItemBeingAutioned().getStartingPrice() > budget*0.1)
+                return false;
+            //----------
             return (price<=budget); //atm the bidder always participates if his/her budget is higher than the item price
         }
     }
