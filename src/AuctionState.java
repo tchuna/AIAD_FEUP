@@ -42,4 +42,11 @@ public class AuctionState {
         if (roundHistory.size() == 0) return itemBeingAutioned.getStartingPrice();
         return roundHistory.get(this.roundHistory.size()-1).getCurrentPrice();
     }
+
+    public String getLastAcceptedProposal_Bidder(){
+        return roundHistory.get(this.roundHistory.size()-1).getCurrentHigestBidder();
+    }
+    public int getLastAcceptedProposal_Value(){
+        return roundHistory.get(this.roundHistory.size()-1).getCurrentPrice();
+    }
 }

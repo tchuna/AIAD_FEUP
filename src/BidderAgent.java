@@ -209,7 +209,7 @@ public class BidderAgent extends Agent{
 
         @Override
         protected void handleRejectProposal(ACLMessage cfp, ACLMessage propose, ACLMessage reject) {
-            printInTerminal(" (Recieved REJECT_PROPOSAL) My bid was not the highest this round.\"");
+            printInTerminal(" (Recieved REJECT_PROPOSAL) My bid was not the highest this round.");
             if(reject.getContent()!=null){
                 updateAuctionStateFromMsg(reject.getContent());
             }

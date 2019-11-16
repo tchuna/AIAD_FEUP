@@ -28,12 +28,6 @@ public class AuctioneerAg extends Agent{
     // Starting price of the item
     //private int startingPrice;
 
-    private int roundCounter=0;
-
-
-    private AID lastAcceptedProposal_Bidder ;
-    private int lastAcceptedProposal_Value ;
-
     private AuctionState auctionState;
 
 
@@ -50,7 +44,7 @@ public class AuctioneerAg extends Agent{
     // Put agent clean-up operations here
     protected void takeDown() {
         // Close the GUI
-        myGui.dispose();
+//        myGui.dispose();
         // Printout a dismissal message
         printInTerminal("Auctioneer-agent "+getAID().getName()+" terminating.");
     }
@@ -81,6 +75,7 @@ public class AuctioneerAg extends Agent{
                 sd.setType("bidding-agent");
                 template.addServices(sd);
                 try {
+                    doWait(500);
                     DFAgentDescription[] result = DFService.search(myAgent, template);
                     printInTerminal("Found the following bidder agents:");
                     // Identifies all bidder agents
@@ -129,10 +124,10 @@ public class AuctioneerAg extends Agent{
             super.handleRefuse(refuse);
             printInTerminal("received REFUSE from "+refuse.getSender().getName());
             // if the answer is REFUSE, the agent is removed from bidderAgents List
-//            bidderAgents.remove(refuse.getSender());
-//            printInTerminal("\nBIDDERS ARE:\n");
-//            for (int i = 0; i < bidderAgents.size(); ++i)
-//                System.out.println("1 - "+(bidderAgents.get(i).getName()));
+            bidderAgents.remove(refuse.getSender());
+            printInTerminal("\nBIDDERS ARE:\n");
+            for (int i = 0; i < bidderAgents.size(); ++i)
+                System.out.println("1 - "+(bidderAgents.get(i).getName()));
         }
 
         @Override
@@ -144,16 +139,18 @@ public class AuctioneerAg extends Agent{
         @Override
         protected void handleAllResponses(Vector responses) {
             super.handleAllResponses(responses);
-            if(responses.size()==bidderAgents.size()){
+            int acceptances =0;
+            for(int i=0;i<responses.size();i++){ if(((ACLMessage)responses.get(i)).getPerformative()==ACLMessage.AGREE) acceptances++;}
+            if(acceptances==bidderAgents.size()){
                 // Fill the CFP message
                 ACLMessage msg = new ACLMessage(ACLMessage.CFP);
                 for (AID bidderAgent : bidderAgents) {
                     msg.addReceiver(bidderAgent);
                 }
                 msg.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-                msg.setContent("Round-"+roundCounter);
+                msg.setContent("Round-"+ getCurrentRoundNumber());
                 // Launch first ROUND
-                System.out.println("-----------***********FIRST ROUND WILL START***********----------------");
+                System.out.println("-----------***********THE AUCTION WILL BEGIN***********----------------");
                 myAgent.addBehaviour(new AuctionRound(myAgent, msg));
             }
             else{
@@ -186,7 +183,7 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handlePropose(ACLMessage propose, Vector v) {
-            printInTerminal(" (RECIEVED PROPOSE) From "+propose.getSender().getName()+" to round "+roundCounter+" with "+propose.getContent()+"$.");
+            printInTerminal(" (RECIEVED PROPOSE) From "+propose.getSender().getName()+" to round "+ getCurrentRoundNumber()+" with "+propose.getContent()+"$.");
         }
 
         /**
@@ -197,7 +194,7 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handleRefuse(ACLMessage refuse) {
-            printInTerminal(" (RECIEVED REFUSE) From "+refuse.getSender().getName()+" to round "+roundCounter+" with "+refuse.getContent()+"$.");
+            printInTerminal(" (RECEIVED REFUSE) From "+refuse.getSender().getName()+" to round "+ getCurrentRoundNumber());
             // if the answer is REFUSE, the agent is removed from bidderAgents List
             bidderAgents.remove(refuse.getSender());
         }
@@ -232,17 +229,8 @@ public class AuctioneerAg extends Agent{
          */
         @Override
         protected void handleAllResponses(Vector responses, Vector acceptances) {
-            // Handles the winner of the auction
-            if(responses.size()==1){
-                ACLMessage response = (ACLMessage) responses.get(0);
-                printInTerminal("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+((auctionState.getRound() == null)?"0":auctionState.getRound().getRoundNr())+ ".\nHE PAID "+response.getContent()+"$");
+            if(checkWinner(responses))
                 return;
-            }
-
-            else if (bidderAgents.size()==0){
-                printInTerminal("BIDDER "+lastAcceptedProposal_Bidder.getLocalName()+" WON THE AUCTION At Round "+((auctionState.getRound() == null)?"0":auctionState.getRound().getRoundNr())+ ".\nHE PAID "+lastAcceptedProposal_Value+"$");
-                return;
-            }
 
             // Evaluate bids proposals vars
             int bestBidProposal = -1;
@@ -268,11 +256,9 @@ public class AuctioneerAg extends Agent{
 
             // Highest bidder's message is ACCEPT_PROPOSAL
             if (accept != null) {
-                printInTerminal("(SENDING ACCEPT_PROPOSAL) To"+bestBidderProposer.getName() +" from bid "+ bestBidProposal+"$.");
+                printInTerminal("(SENDING ACCEPT_PROPOSAL) To "+bestBidderProposer.getName() +" from bid "+ bestBidProposal+"$.");
                 accept.setPerformative(ACLMessage.ACCEPT_PROPOSAL);
-                lastAcceptedProposal_Bidder = bestBidderProposer;
-                lastAcceptedProposal_Value = bestBidProposal;
-                auctionState.updateRoundHistory(new RoundState(roundCounter,bestBidderProposer.getLocalName(), bestBidProposal));
+                auctionState.updateRoundHistory(new RoundState( getCurrentRoundNumber(),bestBidderProposer.getLocalName(), bestBidProposal));
             }
             // Content of the message is the same for everyone: <HIGHEST_BIDDER_NAME>-<VALUE>
             for(int i = 0; i< acceptances.size(); i++) {
@@ -292,21 +278,46 @@ public class AuctioneerAg extends Agent{
             for (int i = 0; i < bidderAgents.size(); ++i)
                 newIterationCFP.addReceiver(bidderAgents.get(i));
             newIterationCFP.setProtocol(FIPANames.InteractionProtocol.FIPA_CONTRACT_NET);
-            newIterationCFP.setContent("Round-"+roundCounter);
+            newIterationCFP.setContent("Round-"+ getCurrentRoundNumber());
 
-            //CREATES NEW ITERATION
-            roundCounter++;
+//            //CREATES NEW ITERATION
+//            roundCounter++;
 
-            System.out.println("NEW ROUND -> round #"+ ((auctionState.getRound() == null)?"0":auctionState.getRound().getRoundNr())+"#####################################################################");
+            System.out.println("NEW ROUND -> round #"+  getCurrentRoundNumber()+" #####################################################################");
             System.out.println("BIDDERS ARE:");
             for (int i = 0; i < bidderAgents.size(); ++i)
                 System.out.println(i+" - "+(bidderAgents.get(i).getName()));
 
             myAgent.addBehaviour(new AuctionRound(myAgent, newIterationCFP));
         }
+
+        public boolean checkWinner( Vector responses){
+            // Handles the winner of the auction
+            if(responses.size()==1){
+                ACLMessage response = (ACLMessage) responses.get(0);
+                //check if winner is last round's winner
+                System.out.println("REPSONSE "+response.getSender().getLocalName() +"/ last accepted "+auctionState.getLastAcceptedProposal_Bidder());
+                if(response.getSender().getLocalName().equals(auctionState.getLastAcceptedProposal_Bidder())){
+                    printInTerminal("BIDDER "+auctionState.getLastAcceptedProposal_Bidder()+" WON THE AUCTION At Round "+ getCurrentRoundNumber()+ ".\nHE PAID "+auctionState.getLastAcceptedProposal_Value()+"$");
+                }
+                else
+                    printInTerminal("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+ getCurrentRoundNumber()+ ".\nHE PAID "+response.getContent()+"$");
+                return true;
+            }
+
+            else if (bidderAgents.size()==0){
+                printInTerminal("BIDDER "+auctionState.getLastAcceptedProposal_Bidder()+" WON THE AUCTION At Round "+ getCurrentRoundNumber()+ ".\nHE PAID "+auctionState.getLastAcceptedProposal_Value()+"$");
+                return true;
+            }
+            return false;
+        }
     }
 
     private void printInTerminal(String msg ){
         System.out.println("AUCTIONEER "+getLocalName()+ "-> " + msg);
+    }
+
+    private Integer getCurrentRoundNumber(){
+        return ((auctionState.getRound() == null)?0: auctionState.getRound().getRoundNr()+1);
     }
 }
