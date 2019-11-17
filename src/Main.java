@@ -5,33 +5,39 @@ import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
 import jade.Boot;
 
+import java.util.Random;
 
 
 public class Main {
 
     public static void main(String[] args) {
-
+        Random r = new Random();
+        int bid1 = r.nextInt(6-6 +1)+6  ;
+        System.out.println(bid1);
+//        int bid = r.nextInt(1)+6+1;
+//        System.out.println(bid);
         String[] param = new String[2];
         param[ 0 ] = "-gui";
         param[ 1 ] = "Auctionner:AuctioneerAg;" +
-                        "Ana:BidderAgent(1000,1, Art, Furniture, Cars);" +
-                        "Pedro:BidderAgent(500,1, Art, Furniture, Cars);" +
-                        "Jorge:BidderAgent(3000,2, Art, Furniture, Cars);" +
-                        "Hugo:BidderAgent(500,3, Art, Furniture, Cars);" +
-                        "Maria:BidderAgent(1000,3, Art, Furniture, Cars);" +
-                        "Maria:BidderAgent(200,5, Art, Furniture, Cars);" +
-                        "Maria:BidderAgent(700,5, BD);" +
-                        "Maria:BidderAgent(7000,2, BD);" +
-                        "Maria:BidderAgent(700,5, Houses);" +
-                        "Maria:BidderAgent(7000,2, Houses);" +
-                        "Maria:BidderAgent(1000,1);" +
-                        "Maria:BidderAgent(500,1);" +
-                        "Maria:BidderAgent(3000,2);" +
-                        "Maria:BidderAgent(500,3);" +
-                        "Maria:BidderAgent(1000,3);" +
-                        "Maria:BidderAgent(200,5);" +
-                        "Maria:BidderAgent(1000,5);" +
-                        "Tchuna:BidderAgent(1000,3, Art, Furniture, Cars)";
+                        "A:BidderAgent(1000,1, Art, Furniture, Cars);" +
+                        "B:BidderAgent(500,1, Art, Furniture, Cars);" +
+                        "C:BidderAgent(3000,2, Art, Furniture, Cars);" +
+                        "D:BidderAgent(500,3, Art, Furniture, Cars);" +
+                        "E:BidderAgent(1000,3, Art, Furniture, Cars);" +
+                        "E1:BidderAgent(1000,4, Art, Furniture, Cars);" +
+                        "F:BidderAgent(200,5, Art, Furniture, Cars);" +
+                        "G:BidderAgent(700,5, BD);" +
+                        "H:BidderAgent(7000,2, BD);" +
+                        "I:BidderAgent(3500,5, Houses);" +
+                        "J:BidderAgent(7000,2, Houses);" +
+                        "K:BidderAgent(1000,1);" +
+                        "L:BidderAgent(500,1);" +
+                        "M:BidderAgent(3000,2);" +
+                        "N:BidderAgent(500,3);" +
+                        "O:BidderAgent(1000,3);" +
+                        "P:BidderAgent(200,5);" +
+                        "Q:BidderAgent(1000,5);" +
+                        "Tchuna:BidderAgent(10000,5, Baby)";
         Boot.main( param );
     }
 }

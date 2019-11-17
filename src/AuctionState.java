@@ -52,17 +52,17 @@ public class AuctionState {
 
     /**
      * Calculates the percentage of raise --> how much the price has risen in the last two
-     * ROUNDS in relation to initial price
+     * ROUNDS in relation to max raise value
      * @return
      */
     public float calculatePercentageOfRaise_lastTwoRounds(){
         float percentage = 0f;
         if(getCurrentRoundNumber()>0){
             if(getCurrentRoundNumber()==1){
-                percentage = (float)(getCurrentPrice() - itemBeingAutioned.getStartingPrice())/itemBeingAutioned.getStartingPrice();
+                percentage = (float)(getCurrentPrice() - itemBeingAutioned.getStartingPrice())/itemBeingAutioned.getMaxRaise();
             }
             else{
-                percentage = (float)(getCurrentPrice() - roundHistory.get(this.roundHistory.size()-2).getCurrentPrice())/itemBeingAutioned.getStartingPrice();
+                percentage = (float)(getCurrentPrice() - roundHistory.get(this.roundHistory.size()-2).getCurrentPrice())/itemBeingAutioned.getMaxRaise();
             }
         }
         return percentage;
