@@ -146,11 +146,9 @@ public class BidderAgent extends Agent{
             //se nao for interesse e agressivvidade =1 nao vai
             if(!interests.contains(auctionState.getItemBeingAutioned().getCategory()) && agressivenessLevel <=1)
                 return false;
-            //-----------
             //----------- se nao for interesse so vai se custar menos de 10% do budget
             if(!interests.contains(auctionState.getItemBeingAutioned().getCategory()) && auctionState.getItemBeingAutioned().getStartingPrice() > budget*0.1)
                 return false;
-            //----------
             return (price<=budget); //atm the bidder always participates if his/her budget is higher than the item price
         }
     }
