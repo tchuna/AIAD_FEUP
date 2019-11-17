@@ -49,4 +49,26 @@ public class AuctionState {
     public int getLastAcceptedProposal_Value(){
         return roundHistory.get(this.roundHistory.size()-1).getCurrentPrice();
     }
+
+    /**
+     * Calculates the percentage of raise --> how much the price has risen in the last two
+     * ROUNDS in relation to initial price
+     * @return
+     */
+    public float calculatePercentageOfRaise_lastTwoRounds(){
+        float percentage = 0f;
+        if(getCurrentRoundNumber()>0){
+            if(getCurrentRoundNumber()==1){
+                percentage = (float)(getCurrentPrice() - itemBeingAutioned.getStartingPrice())/itemBeingAutioned.getStartingPrice();
+            }
+            else{
+                percentage = (float)(getCurrentPrice() - roundHistory.get(this.roundHistory.size()-2).getCurrentPrice())/itemBeingAutioned.getStartingPrice();
+            }
+        }
+        return percentage;
+    }
+
+    public Integer getCurrentRoundNumber(){
+        return ((getRound() == null)?0: getRound().getRoundNr()+1);
+    }
 }
