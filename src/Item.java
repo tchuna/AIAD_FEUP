@@ -3,11 +3,13 @@ public class Item {
     private String name;
     private String category;
     private int startingPrice;
+    private int maxRaise;
 
     public Item(String name, String category, int startingPrice) {
         this.name = name;
         this.category = category;
         this.startingPrice = startingPrice;
+        this.maxRaise=2*startingPrice;
     }
 
     public String getName() {
@@ -33,4 +35,9 @@ public class Item {
     public void setStartingPrice(int startingPrice) {
         this.startingPrice = startingPrice;
     }
+
+    public int getMaxRaise() {
+        return maxRaise;
+    }
+
 }
