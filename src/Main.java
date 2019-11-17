@@ -28,8 +28,8 @@ public class Main {
                         "F:BidderAgent(200,5, Art, Furniture, Cars);" +
                         "G:BidderAgent(700,5, BD);" +
                         "H:BidderAgent(7000,2, BD);" +
-                        "I:BidderAgent(3500,5, Houses);" +
-                        "J:BidderAgent(7000,2, Houses);" +
+                        "I:BidderAgent(3500,5, Cosplay);" +
+                        "J:BidderAgent(7000,2, Cosplay);" +
                         "K:BidderAgent(1000,1);" +
                         "L:BidderAgent(500,1);" +
                         "M:BidderAgent(3000,2);" +

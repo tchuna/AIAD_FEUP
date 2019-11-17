@@ -9,19 +9,24 @@ class CreateAuctionGui extends JFrame {
     private AuctioneerAg myAgent;
 
     private JTextField titleField, priceField;
+    private JComboBox<String>  categoryField;
 
     CreateAuctionGui(AuctioneerAg a) {
         super(a.getLocalName());
 
         myAgent = a;
         JPanel p = new JPanel();
-        p.setLayout(new GridLayout(2, 2));
+        p.setLayout(new GridLayout(3, 2));
         p.add(new JLabel("Item in Auction:"));
         titleField = new JTextField(15);
         p.add(titleField);
         p.add(new JLabel("Initial Price:"));
         priceField = new JTextField(15);
         p.add(priceField);
+        p.add(new JLabel("Item category:"));
+        String[] choices = { "<none>","Tech","Furniture", "Art","Music","Cars","Cosplay"};
+        categoryField = new JComboBox<String>(choices);
+        p.add(categoryField);
         getContentPane().add(p, BorderLayout.CENTER);
 
         JButton addButton = new JButton("Start");
@@ -30,7 +35,9 @@ class CreateAuctionGui extends JFrame {
                 try {
                     String name = titleField.getText().trim();
                     int startingPice = Integer.parseInt(priceField.getText().trim());
-                    myAgent.startAuction(name, startingPice);
+                    String category = (String) categoryField.getSelectedItem().toString().trim();
+                    myAgent.setAuctionState(new AuctionState(new Item(name, category, startingPice)));
+                    myAgent.startAuction();
                     finish();
                 }
                 catch (Exception e) {

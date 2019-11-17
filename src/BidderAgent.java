@@ -236,7 +236,6 @@ public class BidderAgent extends Agent{
                 return 0;
             }
 
-            //TODO: Evaluate agressiveness here
             Random r = new Random();
             float percentageOfBudget; //the percentage value that the current price represents related to the bidder's budget
             percentageOfBudget = (float)auctionState.getCurrentPrice()/budget;
@@ -258,11 +257,11 @@ public class BidderAgent extends Agent{
                 minBid=(int)(auctionState.getItemBeingAutioned().getMaxRaise()*minBidPercentage);
                 if(agressivenessLevel<=3){ // 2-3 agress
                     // calculate how much money he can bid (according to percentage of budget)
-                    moneyAvailableforBidding=(int)(HIGHEST_BIDDING_PERCENTAGE_NOINTEREST_AGRESS_2_3*budget)/*-auctionState.getCurrentPrice()*/;
+                    moneyAvailableforBidding=(int)(HIGHEST_BIDDING_PERCENTAGE_NOINTEREST_AGRESS_2_3*budget)-auctionState.getCurrentPrice();
                 }
                 else{ // 4-5 agress
                     // calculate how much money he can bid (according to percentage of budget)
-                    moneyAvailableforBidding=(int)(BUDGET_PERCENT_NOINTEREST*budget)/*-auctionState.getCurrentPrice()*/;
+                    moneyAvailableforBidding=(int)(BUDGET_PERCENT_NOINTEREST*budget)-auctionState.getCurrentPrice();
                 }
 
                 System.out.println("**************\nMONEY AVAILABLE -> "+moneyAvailableforBidding+" / MINBID -> "+minBid+" / MAXBID -> "+maxBid +"  FOR AGENT "+getLocalName());
@@ -271,16 +270,16 @@ public class BidderAgent extends Agent{
                 if(moneyAvailableforBidding>=minBid){
                     // random between minbid and moneyAvailableforBidding
                     if(moneyAvailableforBidding<maxBid){
-                        bid = r.nextInt(moneyAvailableforBidding-minBid+1)+moneyAvailableforBidding;
+                        bid = r.nextInt(moneyAvailableforBidding-minBid+1)+minBid;
                     }
                     // random between minbid and maxbid
                     else{
-                        bid = r.nextInt(maxBid-minBid+1)+maxBid;
+                        bid = r.nextInt(maxBid-minBid+1)+minBid;
                     }
                 }
                 else{
                     if(moneyAvailableforBidding>0)
-                        bid = moneyAvailableforBidding/*+auctionState.getCurrentPrice()*/;
+                        bid = moneyAvailableforBidding;
                 }
                 //////////////////
             }
@@ -290,7 +289,12 @@ public class BidderAgent extends Agent{
                 // the maximum of bid the bidder can offer [30-100]
                 minBidPercentage=(float)(agressivenessLevel*14)/100;
                 // the minuimum of bid the bidder can offer
-                maxBidPercentage=minBidPercentage+0.14f;
+                if(agressivenessLevel == 5){
+                    maxBidPercentage=1;
+                }else{
+                    maxBidPercentage=minBidPercentage+0.14f;
+                }
+
                 maxBid=(int)(auctionState.getItemBeingAutioned().getMaxRaise()*maxBidPercentage);
                 minBid=(int)(auctionState.getItemBeingAutioned().getMaxRaise()*minBidPercentage);
 
@@ -301,17 +305,17 @@ public class BidderAgent extends Agent{
                         printInTerminal("PRICE has gone up too quickly. I'm out");
                         return 0;
                     }
-                    moneyAvailableforBidding = (int)(HIGHEST_BIDDING_PERCENTAGE_WITHINTEREST_AGRESS_2*budget)/*-auctionState.getCurrentPrice()*/;
+                    moneyAvailableforBidding = (int)(HIGHEST_BIDDING_PERCENTAGE_WITHINTEREST_AGRESS_2*budget)-auctionState.getCurrentPrice();
                 }
                 else if( agressivenessLevel<=2){ //2 agress
                     if (raisePercentage_lastRound>=(0.95f)) { //price has risen 190% or more
                         printInTerminal("PRICE has gone up too quickly. I'm out");
                         return 0;
                     }
-                    moneyAvailableforBidding = (int)(HIGHEST_BIDDING_PERCENTAGE_WITHINTEREST_AGRESS_2*budget)/*-auctionState.getCurrentPrice()*/;
+                    moneyAvailableforBidding = (int)(HIGHEST_BIDDING_PERCENTAGE_WITHINTEREST_AGRESS_2*budget)-auctionState.getCurrentPrice();
                 }
                 else{ // agress >= 3 ->> can bet whole budget
-                    moneyAvailableforBidding=budget/*-auctionState.getCurrentPrice()*/;
+                    moneyAvailableforBidding=budget-auctionState.getCurrentPrice();
                 }
 
                 System.out.println("**************\nMONEY AVAILABLE -> "+moneyAvailableforBidding+" / MINBID -> "+minBid+" / MAXBID -> "+maxBid +"  FOR AGENT "+getLocalName());
@@ -319,17 +323,21 @@ public class BidderAgent extends Agent{
                 // if money available for bidding bigger than minBid, bids
                 if(moneyAvailableforBidding>=minBid){
                     // random between minbid and moneyAvailableforBidding
-                    if(moneyAvailableforBidding<maxBid){
-                        bid = r.nextInt(moneyAvailableforBidding-minBid+1)+moneyAvailableforBidding;
+                    if(moneyAvailableforBidding<maxBid+auctionState.getCurrentPrice()){
+                        bid = r.nextInt(moneyAvailableforBidding-minBid+1)+minBid;
+                        printInTerminal("moneyavaila= "+ moneyAvailableforBidding+"<maxbid+curent= "+((int)maxBid+ (int) auctionState.getCurrentPrice()));
+                        printInTerminal("RANDOM BID 2=" +bid);
                     }
                     // random between minbid and maxbid
                     else{
-                        bid = r.nextInt(maxBid-minBid+1)+maxBid;
+                        bid = r.nextInt(maxBid-minBid+1)+minBid;
+                        printInTerminal("RANDOM BID 1=" +bid);
                     }
                 }
                 else{
+
                     if(moneyAvailableforBidding>0)
-                        bid = moneyAvailableforBidding/*auctionState.getCurrentPrice()*/;
+                        bid = moneyAvailableforBidding;
                 }
                 //////////////////
             }

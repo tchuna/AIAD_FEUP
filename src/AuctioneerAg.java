@@ -40,25 +40,30 @@ public class AuctioneerAg extends Agent{
     // Put agent initializations here
     protected void setup() {
         // Create and show the GUI
-       // myGui = new CreateAuctionGui(this);
-        //myGui.showGui();
-        auctionState = new AuctionState(itemHouse);
-        startAuction(auctionState.getItemBeingAutioned().getName(), auctionState.getItemBeingAutioned().getStartingPrice());
+        myGui = new CreateAuctionGui(this);
+        myGui.showGui();
+       // auctionState = new AuctionState(itemHouse);
+       // startAuction();
 
     }
 
     // Put agent clean-up operations here
     protected void takeDown() {
         // Close the GUI
-//        myGui.dispose();
+        myGui.dispose();
         // Printout a dismissal message
         printInTerminal("Auctioneer-agent "+getAID().getName()+" terminating.");
+    }
+
+    public void setAuctionState(AuctionState as){
+        this.auctionState = as;
+
     }
 
     /**
      ** Called by the GUI when it's time to start the auction
      */
-    public void startAuction(final String name, final int price) {
+    public void startAuction() {
         // Behaviour used for setting local variables and printing the start of Auction
         addBehaviour(new OneShotBehaviour() {
             public void action() {
