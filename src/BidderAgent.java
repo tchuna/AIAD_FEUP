@@ -220,6 +220,12 @@ public class BidderAgent extends Agent{
         private int prepareBid() {
             if(auctionState.getCurrentPrice()>=budget)
                 return 0;
+
+            //If the item is not in the bidders insterest, and the current bid axceed 10% of his budget e quits bidding
+
+            if(!interests.contains(auctionState.getItemBeingAutioned().getCategory()) && auctionState.getCurrentPrice()>=(budget*0.1)){
+                return 0;
+            }
             //TODO: Evaluate agressiveness here
 
             float percentageOfBudget; //the percentage value that the current price represents related to the bidder's budget
