@@ -264,7 +264,7 @@ public class BidderAgent extends Agent{
                     moneyAvailableforBidding=(int)(BUDGET_PERCENT_NOINTEREST*budget)-auctionState.getCurrentPrice();
                 }
 
-                System.out.println("**************\nMONEY AVAILABLE -> "+moneyAvailableforBidding+" / MINBID -> "+minBid+" / MAXBID -> "+maxBid +"  FOR AGENT "+getLocalName());
+               // System.out.println("**************\nMONEY AVAILABLE -> "+moneyAvailableforBidding+" / MINBID -> "+minBid+" / MAXBID -> "+maxBid +"  FOR AGENT "+getLocalName());
                 //////////////////
                 // if money available for bidding bigger than minBid, bids
                 if(moneyAvailableforBidding>=minBid){
@@ -318,20 +318,20 @@ public class BidderAgent extends Agent{
                     moneyAvailableforBidding=budget-auctionState.getCurrentPrice();
                 }
 
-                System.out.println("**************\nMONEY AVAILABLE -> "+moneyAvailableforBidding+" / MINBID -> "+minBid+" / MAXBID -> "+maxBid +"  FOR AGENT "+getLocalName());
+                //System.out.println("**************\nMONEY AVAILABLE -> "+moneyAvailableforBidding+" / MINBID -> "+minBid+" / MAXBID -> "+maxBid +"  FOR AGENT "+getLocalName());
                 //////////////////
                 // if money available for bidding bigger than minBid, bids
                 if(moneyAvailableforBidding>=minBid){
                     // random between minbid and moneyAvailableforBidding
                     if(moneyAvailableforBidding<maxBid+auctionState.getCurrentPrice()){
                         bid = r.nextInt(moneyAvailableforBidding-minBid+1)+minBid;
-                        printInTerminal("moneyavaila= "+ moneyAvailableforBidding+"<maxbid+curent= "+((int)maxBid+ (int) auctionState.getCurrentPrice()));
-                        printInTerminal("RANDOM BID 2=" +bid);
+                     //   printInTerminal("moneyavaila= "+ moneyAvailableforBidding+"<maxbid+curent= "+((int)maxBid+ (int) auctionState.getCurrentPrice()));
+                       // printInTerminal("RANDOM BID 2=" +bid);
                     }
                     // random between minbid and maxbid
                     else{
                         bid = r.nextInt(maxBid-minBid+1)+minBid;
-                        printInTerminal("RANDOM BID 1=" +bid);
+                       // printInTerminal("RANDOM BID 1=" +bid);
                     }
                 }
                 else{
