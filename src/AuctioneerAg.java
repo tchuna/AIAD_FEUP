@@ -13,8 +13,11 @@ import jade.lang.acl.MessageTemplate;
 import jade.proto.AchieveREInitiator;
 import jade.proto.ContractNetInitiator;
 
+import java.io.IOError;
+import java.io.IOException;
 import java.sql.SQLOutput;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 
@@ -39,10 +42,22 @@ public class AuctioneerAg extends Agent{
 
     // Put agent initializations here
     protected void setup() {
-        // Create and show the GUI
-        myGui = new CreateAuctionGui(this);
-        myGui.showGui();
-       // auctionState = new AuctionState(itemHouse);
+
+        Object[] args = getArguments();
+        if (args != null && args.length > 0) {
+            String name = (String) args[0];
+            String category = (String) args[1];
+            Integer startingPice = Integer.parseInt((String) args[2]);
+            setAuctionState(new AuctionState(new Item(name, category, startingPice)));
+            doWait(3000);
+            startAuction();
+        }
+        else{
+            // Create and show the GUI
+            myGui = new CreateAuctionGui(this);
+            myGui.showGui();
+        }
+        // auctionState = new AuctionState(itemHouse);
        // startAuction();
 
     }
@@ -50,7 +65,7 @@ public class AuctioneerAg extends Agent{
     // Put agent clean-up operations here
     protected void takeDown() {
         // Close the GUI
-        myGui.dispose();
+//        myGui.dispose();
         // Printout a dismissal message
         printInTerminal("Auctioneer-agent "+getAID().getName()+" terminating.");
     }
@@ -303,22 +318,40 @@ public class AuctioneerAg extends Agent{
         }
 
         public boolean checkWinner( Vector responses){
-            // Handles the winner of the auction
-            if(responses.size()==1){
-                ACLMessage response = (ACLMessage) responses.get(0);
-                //check if winner is last round's winner
-                System.out.println("REPSONSE "+response.getSender().getLocalName() +"/ last accepted "+auctionState.getLastAcceptedProposal_Bidder());
-                if(response.getSender().getLocalName().equals(auctionState.getLastAcceptedProposal_Bidder())){
-                    printInTerminal("BIDDER "+auctionState.getLastAcceptedProposal_Bidder()+" WON THE AUCTION At Round "+ auctionState.getCurrentRoundNumber()+ ".\nHE PAID "+auctionState.getLastAcceptedProposal_Value()+"$");
+            try{
+                // Handles the winner of the auction
+                if(responses.size()==1){
+                    ACLMessage response = (ACLMessage) responses.get(0);
+                    //check if winner is last round's winner
+                    System.out.println("REPSONSE "+response.getSender().getLocalName() +"/ last accepted "+auctionState.getLastAcceptedProposal_Bidder());
+                    if(response.getSender().getLocalName().equals(auctionState.getLastAcceptedProposal_Bidder())){
+                        printInTerminal("BIDDER "+auctionState.getLastAcceptedProposal_Bidder()+" WON THE AUCTION At Round "+ auctionState.getCurrentRoundNumber()+ ".\nHE PAID "+auctionState.getLastAcceptedProposal_Value()+"$");
+                        CsvWriter.getInstance().setHasWon(auctionState.getLastAcceptedProposal_Bidder());
+                        CsvWriter.getInstance().setPaidValue(auctionState.getLastAcceptedProposal_Value());
+                        CsvWriter.getInstance().writeCSV();
+                        CsvWriter.getInstance().close();
+                    }
+                    else {
+                        printInTerminal("BIDDER " + response.getSender().getLocalName() + " WON THE AUCTION At Round " + auctionState.getCurrentRoundNumber() + ".\nHE PAID " + response.getContent() + "$");
+                        CsvWriter.getInstance().setHasWon(response.getSender().getLocalName());
+                        CsvWriter.getInstance().setPaidValue(Integer.valueOf(response.getContent()));
+                        CsvWriter.getInstance().writeCSV();
+                        CsvWriter.getInstance().close();
+                    }
+                    return true;
                 }
-                else
-                    printInTerminal("BIDDER "+response.getSender().getLocalName()+" WON THE AUCTION At Round "+ auctionState.getCurrentRoundNumber()+ ".\nHE PAID "+response.getContent()+"$");
-                return true;
-            }
 
-            else if (bidderAgents.size()==0){
-                printInTerminal("BIDDER "+auctionState.getLastAcceptedProposal_Bidder()+" WON THE AUCTION At Round "+ auctionState.getCurrentRoundNumber()+ ".\nHE PAID "+auctionState.getLastAcceptedProposal_Value()+"$");
-                return true;
+                else if (bidderAgents.size()==0){
+                    printInTerminal("BIDDER "+auctionState.getLastAcceptedProposal_Bidder()+" WON THE AUCTION At Round "+ auctionState.getCurrentRoundNumber()+ ".\nHE PAID "+auctionState.getLastAcceptedProposal_Value()+"$");
+                    CsvWriter.getInstance().setHasWon(auctionState.getLastAcceptedProposal_Bidder());
+                    CsvWriter.getInstance().setPaidValue(auctionState.getLastAcceptedProposal_Value());
+                    CsvWriter.getInstance().writeCSV();
+                    CsvWriter.getInstance().close();
+                    return true;
+                }
+            }
+            catch (IOException e){
+
             }
             return false;
         }

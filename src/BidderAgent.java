@@ -292,7 +292,7 @@ public class BidderAgent extends Agent{
                 if(agressivenessLevel == 5){
                     maxBidPercentage=1;
                 }else{
-                    maxBidPercentage=minBidPercentage+0.14f;
+                    maxBidPercentage=minBidPercentage+0.28f;
                 }
 
                 maxBid=(int)(auctionState.getItemBeingAutioned().getMaxRaise()*maxBidPercentage);
