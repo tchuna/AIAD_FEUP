@@ -25,12 +25,12 @@ public class CsvWriter {
     // How aggressive the bidder is - [0-5]
     private int agressivenessLevel;
     // Is the bidder interested in the product in auction?
-    private boolean isInterestedInItem;
+    private String isInterestedInItem;
     // bidders in the auction ==> <AGRESSLEVEL-ISINTERESTED-BUDGET>
     private List<HashMap> biddersInAuction = new ArrayList<>();
 
     // Has the bidder won the auction
-    private boolean hasWon;
+    private String hasWon;
     // Value paid by bidder who won
     private int paidValue;
 
@@ -43,7 +43,7 @@ public class CsvWriter {
 
 
     private CsvWriter() throws IOException {
-        writer = new FileWriter("src/auctionsDataRapidMiner.csv", true);
+        writer = new FileWriter("./auctionsDataRapidMiner.csv", true);
         percentageAgresssive= new float [6];
     }
 
@@ -60,7 +60,8 @@ public class CsvWriter {
     }
 
     public void setInterestedInItem(boolean interestedInItem) {
-        isInterestedInItem = interestedInItem;
+     
+        isInterestedInItem = interestedInItem ? "1" : "0";
     }
 
     public void addBiddersToAuction(Integer agress, Boolean isInterested, Integer budget) {
@@ -72,7 +73,12 @@ public class CsvWriter {
     }
 
     public void setHasWon(String bidderWon) {
-        this.hasWon = (bidderWon.equals("Bidder0"));
+        if(bidderWon.equals("Bidder0")){
+            this.hasWon = "1";
+        }else{
+            this.hasWon = "0";
+        }
+        //this.hasWon = (bidderWon.equals("Bidder0"));
     }
 
     public void setPaidValue(int paidValue) {
